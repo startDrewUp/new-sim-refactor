@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import useZoom from "./useZoom";
 import usePanning from "./usePanning";
 import usePolyline from "./usePolyline";
-import useGridLines from "./useGridLines";
+import useGridLines from "./useGridLines"; // Import the useGridLines hook
 import useViewBox from "./useViewBox";
 import useItemSelection from "./useItemSelection";
 import useItemEditing from "./useItemEditing";
@@ -18,9 +18,8 @@ const useCanvas = () => {
   const gRef = useRef(null);
   const containerRef = useRef(null);
 
-  const { items, transform, polylines } = useSelector((state) => state.layout);
-  const snapToGrid = useSelector((state) => state.layout.snapToGrid);
-  const gridSize = useSelector((state) => state.layout.gridSize);
+  const { items, transform, polylines, gridSize, snapToGrid, gridOpacity } =
+    useSelector((state) => state.layout);
 
   const viewBox = useViewBox(containerRef);
 
@@ -55,7 +54,7 @@ const useCanvas = () => {
     handleCanvasClick,
   } = usePolyline(svgRef, gRef);
 
-  const gridLines = useGridLines(viewBox);
+  const gridLines = useGridLines(viewBox); // Generate gridLines using the hook
 
   const { selectedItems, toggleItemSelection, clearSelection } =
     useItemSelection();
@@ -113,7 +112,7 @@ const useCanvas = () => {
     polylines,
     selectedItems,
     editingItem,
-    gridLines,
+    gridLines, // Return gridLines
     currentPolyline,
     shadowPoint,
     gridSize,

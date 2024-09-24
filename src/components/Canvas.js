@@ -1,6 +1,6 @@
 // src/components/Canvas.js
 
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { Box } from "@mui/material";
 import useCanvas from "../hooks/useCanvas";
 import CanvasItem from "./CanvasItem";
@@ -13,16 +13,15 @@ import {
   clearAddItemRequest,
   clearFitToViewRequest,
   setTransform,
+  selectPolyline,
+  deselectItems,
 } from "../redux/slices/layoutSlice";
-import useItemDrag from "../hooks/useItemDrag";
-import usePolylineDrag from "../hooks/usePolylineDrag";
 import useDeleteKey from "../hooks/useDeleteKey";
-import useItemSelection from "../hooks/useItemSelection";
 
 const Canvas = () => {
   const dispatch = useDispatch();
 
-  // Hooks from useCanvas
+  // Utilize the useCanvas hook to get all necessary refs and handlers
   const {
     svgRef,
     gRef,
@@ -31,49 +30,36 @@ const Canvas = () => {
     transform,
     isDragging,
     polylineMode,
+    items,
+    polylines,
+    selectedItems,
+    editingItem,
+    gridLines,
+    currentPolyline,
+    shadowPoint,
+    gridSize,
     handleWheel,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
-    handleCanvasClick,
+    toggleItemSelection,
+    handleEditItem,
+    handleCloseEdit,
+    handleCanvasClick, // Provided by useCanvas
+    handleItemMouseDown,
+    handlePolylineMouseDown,
+    handleKeyDown,
   } = useCanvas();
 
-  const addItemRequest = useSelector((state) => state.layout.addItemRequest);
-  const fitToViewRequest = useSelector(
-    (state) => state.layout.fitToViewRequest
-  );
-  const items = useSelector((state) => state.layout.items);
-  const polylines = useSelector((state) => state.layout.polylines);
-  const currentPolyline = useSelector((state) => state.layout.currentPolyline);
-  const shadowPoint = useSelector((state) => state.layout.shadowPoint);
-  const gridLines = useSelector((state) => state.layout.gridLines);
-  const gridSize = useSelector((state) => state.layout.gridSize);
-  const snapToGrid = useSelector((state) => state.layout.snapToGrid);
-
-  // Use useItemSelection hook
-  const { selectedItems, toggleItemSelection, clearSelection } =
-    useItemSelection();
-
-  // Use useItemDrag hook
-  const { handleItemMouseDown } = useItemDrag(
-    svgRef,
-    gRef,
-    snapToGrid,
-    gridSize
+  // Handler for selecting a polyline
+  const handleSelect = useCallback(
+    (id) => {
+      dispatch(selectPolyline(id));
+    },
+    [dispatch]
   );
 
-  // Use usePolylineDrag hook
-  const { handlePolylineMouseDown } = usePolylineDrag(
-    svgRef,
-    gRef,
-    snapToGrid,
-    gridSize
-  );
-
-  // Use useDeleteKey hook
-  const handleKeyDown = useDeleteKey(selectedItems);
-
-  // Effect to handle keydown events
+  // Effect to handle keydown events (e.g., delete key)
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -81,7 +67,8 @@ const Canvas = () => {
     };
   }, [handleKeyDown]);
 
-  // Effect to handle adding a new item
+  // Effect to handle adding a new item based on addItemRequest
+  const addItemRequest = useSelector((state) => state.layout.addItemRequest);
   useEffect(() => {
     if (addItemRequest && svgRef.current && gRef.current) {
       const newItem = addItemRequest;
@@ -111,10 +98,16 @@ const Canvas = () => {
     }
   }, [addItemRequest, svgRef, gRef, dispatch]);
 
-  // Effect to handle fit to view
+  // Effect to handle fit to view requests
+  const fitToViewRequest = useSelector(
+    (state) => state.layout.fitToViewRequest
+  );
+  const { items: layoutItems, polylines: layoutPolylines } = useSelector(
+    (state) => state.layout
+  );
   useEffect(() => {
     if (fitToViewRequest && svgRef.current && gRef.current) {
-      if (items.length === 0 && polylines.length === 0) {
+      if (layoutItems.length === 0 && layoutPolylines.length === 0) {
         dispatch(clearFitToViewRequest());
         return;
       }
@@ -127,7 +120,7 @@ const Canvas = () => {
       const pixelsPerUnit = 10; // Adjust if necessary
 
       // Include items in bounding box calculation
-      items.forEach((item) => {
+      layoutItems.forEach((item) => {
         const itemWidth = item.width * pixelsPerUnit;
         const itemHeight = item.height * pixelsPerUnit;
 
@@ -138,7 +131,7 @@ const Canvas = () => {
       });
 
       // Include polylines in bounding box calculation
-      polylines.forEach((polyline) => {
+      layoutPolylines.forEach((polyline) => {
         polyline.points.forEach((point) => {
           minX = Math.min(minX, point.x);
           minY = Math.min(minY, point.y);
@@ -174,35 +167,10 @@ const Canvas = () => {
 
       dispatch(clearFitToViewRequest());
     }
-  }, [fitToViewRequest, svgRef, gRef, items, polylines, dispatch]);
+  }, [fitToViewRequest, svgRef, gRef, layoutItems, layoutPolylines, dispatch]);
 
-  // Handle canvas mouse down to clear selection or initiate panning
-  const handleCanvasMouseDown = (e) => {
-    // If middle mouse button is pressed, initiate panning
-    if (e.button === 1) {
-      handleMouseDown(e);
-      return;
-    }
-
-    // If in polyline mode and left mouse button is pressed
-    if (polylineMode && e.button === 0) {
-      handleCanvasClick(e);
-      return;
-    }
-
-    // If clicked on an item or polyline
-    if (
-      e.target.closest(".canvas-item") ||
-      e.target.closest(".canvas-polyline")
-    ) {
-      // Do nothing here since handleItemMouseDown or handlePolylineMouseDown is called directly
-    } else {
-      // If left mouse button is pressed, deselect all items
-      if (e.button === 0) {
-        clearSelection();
-      }
-    }
-  };
+  // Handler to deselect all items when clicking outside
+  // No longer declaring handleCanvasClick here since it's provided by useCanvas
 
   return (
     <Box
@@ -225,10 +193,11 @@ const Canvas = () => {
           cursor: isDragging ? "grabbing" : polylineMode ? "crosshair" : "grab",
         }}
         onWheel={handleWheel}
-        onMouseDown={handleCanvasMouseDown}
+        onMouseDown={handleMouseDown} // Use 'handleMouseDown' from useCanvas
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onClick={handleCanvasClick} // Handle canvas clicks for deselection
       >
         <g
           ref={gRef}
@@ -236,14 +205,14 @@ const Canvas = () => {
             transform.scale
           }) translate(${-transform.x}, ${-transform.y})`}
         >
-          {gridLines}
+          {gridLines} {/* Render gridLines generated by useCanvas */}
           {items.map((item) => (
             <CanvasItem
               key={item.id}
               item={item}
               isSelected={selectedItems.has(item.id)}
               onSelect={toggleItemSelection}
-              onEdit={() => {}}
+              onEdit={() => handleEditItem(item)} // Trigger edit on edit action
               handleItemMouseDown={handleItemMouseDown}
               transform={transform}
             />
@@ -253,23 +222,32 @@ const Canvas = () => {
               key={polyline.id}
               polyline={polyline}
               isSelected={selectedItems.has(polyline.id)}
-              onSelect={toggleItemSelection}
+              onSelect={handleSelect} // Pass the correct handler
               handlePolylineMouseDown={handlePolylineMouseDown}
-              transform={transform}
+              transform={transform} // Correctly passing transform
             />
           ))}
           {polylineMode && (
             <Polyline
               polyline={{
+                id: `shadow-${uuidv4()}`, // Assign a unique ID with 'shadow-' prefix
                 points: [...currentPolyline, shadowPoint].filter(Boolean),
               }}
-              isActive
+              isActive={true}
               isShadow={true}
+              onSelect={() => {}} // Pass a no-op function to prevent runtime error
+              handlePolylineMouseDown={handlePolylineMouseDown} // Pass handlePolylineMouseDown
+              transform={transform} // Correctly passing transform
             />
           )}
         </g>
       </svg>
-      <ItemEditDialog item={null} open={false} onClose={() => {}} />
+      {/* Render ItemEditDialog with appropriate props */}
+      <ItemEditDialog
+        item={editingItem}
+        open={!!editingItem}
+        onClose={handleCloseEdit}
+      />
     </Box>
   );
 };

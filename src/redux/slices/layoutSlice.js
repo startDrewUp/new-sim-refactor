@@ -14,6 +14,8 @@ const initialState = {
   polylines: [],
   addItemRequest: null,
   fitToViewRequest: false,
+  selectedItemId: null, // Added for item selection
+  selectedPolylineId: null, // Added for polyline selection
   // Undo/Redo
   history: [],
   historyIndex: -1,
@@ -70,6 +72,8 @@ const layoutSlice = createSlice({
         (polyline) => !selectedIds.includes(polyline.id)
       );
       layoutSlice.caseReducers.saveHistory(state);
+      state.selectedItemId = null;
+      state.selectedPolylineId = null;
     },
 
     // Action to clear all items and polylines from the canvas
@@ -78,6 +82,8 @@ const layoutSlice = createSlice({
       state.polylines = [];
       state.currentPolyline = [];
       layoutSlice.caseReducers.saveHistory(state);
+      state.selectedItemId = null;
+      state.selectedPolylineId = null;
     },
 
     // Action to toggle the grid visibility
@@ -102,7 +108,16 @@ const layoutSlice = createSlice({
 
     // Action to set the canvas transform (scale and translation)
     setTransform: (state, action) => {
-      state.transform = action.payload;
+      const { scale, x, y } = action.payload;
+      if (
+        typeof scale === "number" &&
+        typeof x === "number" &&
+        typeof y === "number"
+      ) {
+        state.transform = { scale, x, y };
+      } else {
+        console.error("Invalid transform payload:", action.payload);
+      }
     },
 
     // Action to set polyline drawing mode
@@ -150,6 +165,22 @@ const layoutSlice = createSlice({
     // Action to load canvas state
     loadCanvasState: (state, action) => {
       return action.payload;
+    },
+
+    // Action to select an item
+    selectItem: (state, action) => {
+      state.selectedItemId = action.payload;
+    },
+
+    // Action to deselect items
+    deselectItems: (state) => {
+      state.selectedItemId = null;
+      state.selectedPolylineId = null;
+    },
+
+    // Action to select a polyline
+    selectPolyline: (state, action) => {
+      state.selectedPolylineId = action.payload;
     },
 
     // Undo/Redo Actions
@@ -212,6 +243,9 @@ export const {
   requestFitToView,
   clearFitToViewRequest,
   loadCanvasState,
+  selectItem, // Newly added
+  deselectItems, // Newly added
+  selectPolyline, // Newly added
   undo,
   redo,
 } = layoutSlice.actions;
