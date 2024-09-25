@@ -7,14 +7,17 @@ import {
   finalizePolyline,
   finishPolyline,
   setPolylineMode,
-} from "../redux/slices/layoutSlice";
+  selectPolylineMode,
+  selectCurrentPolyline,
+} from "../redux/slices/polylineSlice";
+import { selectSnapToGrid, selectGridSize } from "../redux/slices/gridSlice";
 
 const usePolyline = (svgRef, gRef) => {
   const dispatch = useDispatch();
-  const polylineMode = useSelector((state) => state.layout.polylineMode);
-  const currentPolyline = useSelector((state) => state.layout.currentPolyline);
-  const snapToGrid = useSelector((state) => state.layout.snapToGrid);
-  const gridSize = useSelector((state) => state.layout.gridSize);
+  const polylineMode = useSelector(selectPolylineMode);
+  const currentPolyline = useSelector(selectCurrentPolyline);
+  const snapToGrid = useSelector(selectSnapToGrid);
+  const gridSize = useSelector(selectGridSize);
   const [shadowPoint, setShadowPoint] = useState(null);
   const [discardPolyline, setDiscardPolyline] = useState(false);
 
@@ -118,7 +121,7 @@ const usePolyline = (svgRef, gRef) => {
   }, [handleKeyDown]);
 
   useEffect(() => {
-    if (!polylineMode) {
+    if (!polylineMode && currentPolyline.length > 0) {
       if (currentPolyline.length > 1 && !discardPolyline) {
         dispatch(finalizePolyline());
       } else {
@@ -127,7 +130,7 @@ const usePolyline = (svgRef, gRef) => {
       setShadowPoint(null);
       setDiscardPolyline(false);
     }
-  }, [polylineMode, currentPolyline.length, discardPolyline, dispatch]);
+  }, [polylineMode, currentPolyline, discardPolyline, dispatch]);
 
   return {
     polylineMode,

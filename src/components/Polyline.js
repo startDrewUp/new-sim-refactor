@@ -14,7 +14,6 @@ const Polyline = ({
 }) => {
   const { id, points } = polyline;
 
-  // useMemo to filter valid points unconditionally
   const validPoints = useMemo(() => {
     return points.filter(
       (point) =>
@@ -22,7 +21,6 @@ const Polyline = ({
     );
   }, [points]);
 
-  // useMemo to construct path data unconditionally
   const pathData = useMemo(() => {
     return validPoints.reduce((acc, point, index) => {
       if (index === 0) {
@@ -32,7 +30,6 @@ const Polyline = ({
     }, "");
   }, [validPoints]);
 
-  // Early safety check for 'transform'
   if (
     !transform ||
     typeof transform.scale !== "number" ||
@@ -43,11 +40,10 @@ const Polyline = ({
     return null;
   }
 
-  // Early exit based on polyline type
   if (isShadow) {
-    if (validPoints.length < 1) return null; // Allow one point for shadow
+    if (validPoints.length < 1) return null;
   } else {
-    if (validPoints.length < 2) return null; // Require two points for regular polylines
+    if (validPoints.length < 2) return null;
   }
 
   const handleMouseDown = (e) => {
@@ -69,9 +65,9 @@ const Polyline = ({
       onMouseDown={handleMouseDown}
       className="canvas-polyline"
       style={{ cursor: isActive ? "crosshair" : "move" }}
-      tabIndex={0} // Makes the group focusable via keyboard
-      role="button" // Defines the role for accessibility
-      aria-label="Polyline" // Provides an accessible name
+      tabIndex={0}
+      role="button"
+      aria-label="Polyline"
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           if (typeof onSelect === "function") {
@@ -103,7 +99,7 @@ const Polyline = ({
       />
       {validPoints.map((point, index) => (
         <circle
-          key={`${point.x}-${point.y}-${index}`} // Ensures unique keys
+          key={`${point.x}-${point.y}-${index}`}
           cx={point.x}
           cy={point.y}
           r={4 / transform.scale}
@@ -126,7 +122,7 @@ Polyline.propTypes = {
     ).isRequired,
   }).isRequired,
   isSelected: PropTypes.bool,
-  onSelect: PropTypes.func.isRequired, // Ensure this is always a function
+  onSelect: PropTypes.func.isRequired,
   handlePolylineMouseDown: PropTypes.func.isRequired,
   transform: PropTypes.shape({
     scale: PropTypes.number.isRequired,

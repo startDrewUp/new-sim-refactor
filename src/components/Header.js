@@ -17,7 +17,10 @@ import HelpIcon from "@mui/icons-material/Help";
 import SaveIcon from "@mui/icons-material/Save";
 import UploadIcon from "@mui/icons-material/Upload";
 import { useDispatch } from "react-redux";
-import { saveCanvasState, loadCanvasState } from "../redux/slices/layoutSlice";
+import {
+  saveCanvasState,
+  loadCanvasStateThunk,
+} from "../redux/thunks/canvasThunks";
 
 const AnimatedButton = styled(Button)(({ theme }) => ({
   position: "relative",
@@ -54,7 +57,7 @@ const Header = () => {
       reader.onload = (e) => {
         try {
           const canvasState = JSON.parse(e.target.result);
-          dispatch(loadCanvasState(canvasState.layout));
+          dispatch(loadCanvasStateThunk(canvasState));
           setSnackbarMessage("Canvas loaded successfully");
           setOpenSnackbar(true);
         } catch (error) {

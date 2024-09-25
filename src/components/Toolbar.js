@@ -18,15 +18,19 @@ import {
 import { styled } from "@mui/system";
 import { SketchPicker } from "react-color";
 import {
-  clearCanvas,
-  toggleGrid,
-  toggleSnapToGrid,
-  setPolylineMode,
-  addItem,
+  requestAddItem,
   requestFitToView,
   undo,
   redo,
 } from "../redux/slices/layoutSlice";
+import {
+  toggleGrid,
+  toggleSnapToGrid,
+  selectShowGrid,
+  selectSnapToGrid,
+} from "../redux/slices/gridSlice";
+import { setPolylineMode } from "../redux/slices/polylineSlice";
+import { clearCanvas } from "../redux/thunks/canvasThunks";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
@@ -51,9 +55,9 @@ const AnimatedButton = styled(Button)(({ theme }) => ({
 
 const Toolbar = () => {
   const dispatch = useDispatch();
-  const { showGrid, snapToGrid, polylineMode } = useSelector(
-    (state) => state.layout
-  );
+  const showGrid = useSelector(selectShowGrid);
+  const snapToGrid = useSelector(selectSnapToGrid);
+  const polylineMode = useSelector((state) => state.layout.polylineMode);
   const [openDialog, setOpenDialog] = useState(false);
   const [itemName, setItemName] = useState("");
   const [itemColor, setItemColor] = useState("#4CAF50");
@@ -71,25 +75,13 @@ const Toolbar = () => {
       y: 0,
     };
 
-    dispatch(addItem(newItem));
+    dispatch(requestAddItem(newItem));
 
     setOpenDialog(false);
     setItemName("");
     setItemColor("#4CAF50");
     setItemWidth(5);
     setItemHeight(5);
-  };
-
-  const handleFitToView = () => {
-    dispatch(requestFitToView());
-  };
-
-  const handleUndo = () => {
-    dispatch(undo());
-  };
-
-  const handleRedo = () => {
-    dispatch(redo());
   };
 
   return (
@@ -124,21 +116,21 @@ const Toolbar = () => {
       </AnimatedButton>
       <AnimatedButton
         variant="contained"
-        onClick={handleFitToView}
+        onClick={() => dispatch(requestFitToView())}
         startIcon={<ZoomOutMapIcon />}
       >
         Fit to View
       </AnimatedButton>
       <AnimatedButton
         variant="contained"
-        onClick={handleUndo}
+        onClick={() => dispatch(undo())}
         startIcon={<UndoIcon />}
       >
         Undo
       </AnimatedButton>
       <AnimatedButton
         variant="contained"
-        onClick={handleRedo}
+        onClick={() => dispatch(redo())}
         startIcon={<RedoIcon />}
       >
         Redo
@@ -176,7 +168,6 @@ const Toolbar = () => {
         label="Draw Polyline"
         sx={{ color: "secondary.main", fontFamily: "inherit" }}
       />
-      {/* Dialog for adding new item */}
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}

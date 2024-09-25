@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { updatePolylinePosition } from "../redux/slices/layoutSlice";
+import { updatePolylinePosition } from "../redux/slices/polylineSlice";
 
 const usePolylineDrag = (svgRef, gRef, snapToGrid, gridSize) => {
   const dispatch = useDispatch();

@@ -10,7 +10,7 @@ import {
   Typography,
   TextField,
 } from "@mui/material";
-import { setGridOpacity, setGridSize } from "../redux/slices/layoutSlice";
+import { setGridOpacity, setGridSize } from "../redux/slices/gridSlice";
 
 const CanvasSettings = () => {
   const dispatch = useDispatch();

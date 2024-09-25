@@ -1,16 +1,14 @@
 // src/hooks/useZoom.js
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setTransform } from "../redux/slices/layoutSlice";
+import { setTransform, selectTransform } from "../redux/slices/transformSlice";
 
 const useZoom = (svgRef) => {
   const dispatch = useDispatch();
-  const transform = useSelector((state) => state.layout.transform);
+  const transform = useSelector(selectTransform);
 
   const handleWheel = useCallback(
     (e) => {
-      e.preventDefault();
-
       const svgElement = svgRef.current;
 
       // Get the bounding rectangle of the SVG element
@@ -49,6 +47,22 @@ const useZoom = (svgRef) => {
     },
     [dispatch, svgRef, transform]
   );
+
+  useEffect(() => {
+    const svgElement = svgRef.current;
+    if (svgElement) {
+      const wheelListener = (e) => {
+        e.preventDefault();
+        handleWheel(e);
+      };
+
+      svgElement.addEventListener("wheel", wheelListener, { passive: false });
+
+      return () => {
+        svgElement.removeEventListener("wheel", wheelListener);
+      };
+    }
+  }, [handleWheel, svgRef]);
 
   return { handleWheel };
 };

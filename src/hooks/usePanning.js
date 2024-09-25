@@ -2,11 +2,11 @@
 
 import { useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setTransform } from "../redux/slices/layoutSlice";
+import { setTransform, selectTransform } from "../redux/slices/transformSlice";
 
 const usePanning = () => {
   const dispatch = useDispatch();
-  const transform = useSelector((state) => state.layout.transform);
+  const transform = useSelector(selectTransform);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 

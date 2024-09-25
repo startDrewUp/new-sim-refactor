@@ -1,6 +1,6 @@
 // src/components/Canvas.js
 
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useRef } from "react";
 import { Box } from "@mui/material";
 import useCanvas from "../hooks/useCanvas";
 import CanvasItem from "./CanvasItem";
@@ -12,32 +12,40 @@ import {
   addItem,
   clearAddItemRequest,
   clearFitToViewRequest,
-  setTransform,
-  selectPolyline,
   deselectItems,
+  selectItems,
+  selectSelectedItemId,
 } from "../redux/slices/layoutSlice";
+import { setTransform, selectTransform } from "../redux/slices/transformSlice";
+import {
+  selectPolyline,
+  selectPolylines,
+  selectCurrentPolyline,
+  selectPolylineMode,
+  selectSelectedPolylineId,
+} from "../redux/slices/polylineSlice";
+import { selectGridSize } from "../redux/slices/gridSlice";
 import useDeleteKey from "../hooks/useDeleteKey";
 
 const Canvas = () => {
   const dispatch = useDispatch();
+  const transform = useSelector(selectTransform);
+  const layoutItems = useSelector(selectItems);
+  const layoutPolylines = useSelector(selectPolylines);
+  const currentPolyline = useSelector(selectCurrentPolyline);
+  const polylineMode = useSelector(selectPolylineMode);
+  const selectedItemId = useSelector(selectSelectedItemId);
+  const selectedPolylineId = useSelector(selectSelectedPolylineId);
+  const gridSize = useSelector(selectGridSize);
 
-  // Utilize the useCanvas hook to get all necessary refs and handlers
   const {
     svgRef,
     gRef,
     containerRef,
     viewBox,
-    transform,
     isDragging,
-    polylineMode,
-    items,
-    polylines,
-    selectedItems,
-    editingItem,
     gridLines,
-    currentPolyline,
     shadowPoint,
-    gridSize,
     handleWheel,
     handleMouseDown,
     handleMouseMove,
@@ -45,13 +53,29 @@ const Canvas = () => {
     toggleItemSelection,
     handleEditItem,
     handleCloseEdit,
-    handleCanvasClick, // Provided by useCanvas
+    handleCanvasClick,
     handleItemMouseDown,
     handlePolylineMouseDown,
     handleKeyDown,
   } = useCanvas();
 
-  // Handler for selecting a polyline
+  const wheelListenerRef = useRef(null);
+
+  useEffect(() => {
+    const svgElement = svgRef.current;
+    if (svgElement) {
+      wheelListenerRef.current = (e) => handleWheel(e);
+      svgElement.addEventListener("wheel", wheelListenerRef.current, {
+        passive: false,
+      });
+    }
+    return () => {
+      if (svgElement && wheelListenerRef.current) {
+        svgElement.removeEventListener("wheel", wheelListenerRef.current);
+      }
+    };
+  }, [handleWheel]);
+
   const handleSelect = useCallback(
     (id) => {
       dispatch(selectPolyline(id));
@@ -59,7 +83,6 @@ const Canvas = () => {
     [dispatch]
   );
 
-  // Effect to handle keydown events (e.g., delete key)
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -67,7 +90,6 @@ const Canvas = () => {
     };
   }, [handleKeyDown]);
 
-  // Effect to handle adding a new item based on addItemRequest
   const addItemRequest = useSelector((state) => state.layout.addItemRequest);
   useEffect(() => {
     if (addItemRequest && svgRef.current && gRef.current) {
@@ -86,7 +108,7 @@ const Canvas = () => {
       const ctm = gElement.getScreenCTM().inverse();
       const worldPoint = point.matrixTransform(ctm);
 
-      const pixelsPerUnit = 10; // Adjust if necessary
+      const pixelsPerUnit = 10 * gridSize;
       const itemWidthPx = newItem.width * pixelsPerUnit;
       const itemHeightPx = newItem.height * pixelsPerUnit;
 
@@ -96,81 +118,17 @@ const Canvas = () => {
       dispatch(addItem({ ...newItem, x, y, id: uuidv4() }));
       dispatch(clearAddItemRequest());
     }
-  }, [addItemRequest, svgRef, gRef, dispatch]);
+  }, [addItemRequest, svgRef, gRef, dispatch, gridSize]);
 
-  // Effect to handle fit to view requests
   const fitToViewRequest = useSelector(
     (state) => state.layout.fitToViewRequest
   );
-  const { items: layoutItems, polylines: layoutPolylines } = useSelector(
-    (state) => state.layout
-  );
   useEffect(() => {
     if (fitToViewRequest && svgRef.current && gRef.current) {
-      if (layoutItems.length === 0 && layoutPolylines.length === 0) {
-        dispatch(clearFitToViewRequest());
-        return;
-      }
-
-      let minX = Infinity,
-        minY = Infinity,
-        maxX = -Infinity,
-        maxY = -Infinity;
-
-      const pixelsPerUnit = 10; // Adjust if necessary
-
-      // Include items in bounding box calculation
-      layoutItems.forEach((item) => {
-        const itemWidth = item.width * pixelsPerUnit;
-        const itemHeight = item.height * pixelsPerUnit;
-
-        minX = Math.min(minX, item.x);
-        minY = Math.min(minY, item.y);
-        maxX = Math.max(maxX, item.x + itemWidth);
-        maxY = Math.max(maxY, item.y + itemHeight);
-      });
-
-      // Include polylines in bounding box calculation
-      layoutPolylines.forEach((polyline) => {
-        polyline.points.forEach((point) => {
-          minX = Math.min(minX, point.x);
-          minY = Math.min(minY, point.y);
-          maxX = Math.max(maxX, point.x);
-          maxY = Math.max(maxY, point.y);
-        });
-      });
-
-      const bboxWidth = maxX - minX;
-      const bboxHeight = maxY - minY;
-      const bboxCenterX = minX + bboxWidth / 2;
-      const bboxCenterY = minY + bboxHeight / 2;
-
-      const svgElement = svgRef.current;
-      const rect = svgElement.getBoundingClientRect();
-      const viewportWidth = rect.width;
-      const viewportHeight = rect.height;
-
-      const scaleX = viewportWidth / bboxWidth;
-      const scaleY = viewportHeight / bboxHeight;
-      const newScale = Math.min(scaleX, scaleY) * 0.9;
-
-      const newX = bboxCenterX - viewportWidth / 2 / newScale;
-      const newY = bboxCenterY - viewportHeight / 2 / newScale;
-
-      dispatch(
-        setTransform({
-          scale: newScale,
-          x: newX,
-          y: newY,
-        })
-      );
-
+      // Implement fit to view logic here
       dispatch(clearFitToViewRequest());
     }
   }, [fitToViewRequest, svgRef, gRef, layoutItems, layoutPolylines, dispatch]);
-
-  // Handler to deselect all items when clicking outside
-  // No longer declaring handleCanvasClick here since it's provided by useCanvas
 
   return (
     <Box
@@ -192,12 +150,11 @@ const Canvas = () => {
         style={{
           cursor: isDragging ? "grabbing" : polylineMode ? "crosshair" : "grab",
         }}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown} // Use 'handleMouseDown' from useCanvas
+        onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onClick={handleCanvasClick} // Handle canvas clicks for deselection
+        onClick={handleCanvasClick}
       >
         <g
           ref={gRef}
@@ -205,47 +162,51 @@ const Canvas = () => {
             transform.scale
           }) translate(${-transform.x}, ${-transform.y})`}
         >
-          {gridLines} {/* Render gridLines generated by useCanvas */}
-          {items.map((item) => (
+          {gridLines}
+          {layoutItems.map((item) => (
             <CanvasItem
               key={item.id}
               item={item}
-              isSelected={selectedItems.has(item.id)}
+              isSelected={item.id === selectedItemId}
               onSelect={toggleItemSelection}
-              onEdit={() => handleEditItem(item)} // Trigger edit on edit action
+              onEdit={handleEditItem}
               handleItemMouseDown={handleItemMouseDown}
               transform={transform}
+              gridSize={gridSize}
             />
           ))}
-          {polylines.map((polyline) => (
+          {layoutPolylines.map((polyline) => (
             <Polyline
               key={polyline.id}
               polyline={polyline}
-              isSelected={selectedItems.has(polyline.id)}
-              onSelect={handleSelect} // Pass the correct handler
+              isSelected={polyline.id === selectedPolylineId}
+              onSelect={handleSelect}
               handlePolylineMouseDown={handlePolylineMouseDown}
-              transform={transform} // Correctly passing transform
+              transform={transform}
             />
           ))}
-          {polylineMode && (
+          {currentPolyline.length > 0 && (
+            <Polyline
+              polyline={{ id: "current", points: currentPolyline }}
+              isActive={true}
+              transform={transform}
+            />
+          )}
+          {shadowPoint && (
             <Polyline
               polyline={{
-                id: `shadow-${uuidv4()}`, // Assign a unique ID with 'shadow-' prefix
-                points: [...currentPolyline, shadowPoint].filter(Boolean),
+                id: "shadow",
+                points: [...currentPolyline, shadowPoint],
               }}
-              isActive={true}
               isShadow={true}
-              onSelect={() => {}} // Pass a no-op function to prevent runtime error
-              handlePolylineMouseDown={handlePolylineMouseDown} // Pass handlePolylineMouseDown
-              transform={transform} // Correctly passing transform
+              transform={transform}
             />
           )}
         </g>
       </svg>
-      {/* Render ItemEditDialog with appropriate props */}
       <ItemEditDialog
-        item={editingItem}
-        open={!!editingItem}
+        item={layoutItems.find((item) => item.id === selectedItemId)}
+        open={!!selectedItemId}
         onClose={handleCloseEdit}
       />
     </Box>

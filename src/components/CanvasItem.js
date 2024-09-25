@@ -10,57 +10,53 @@ const CanvasItem = ({
   onEdit,
   handleItemMouseDown,
   transform,
+  gridSize,
 }) => {
-  const { id, x, y, width, height, label } = item;
+  const { id, x, y, width, height, name, color } = item;
+  const pixelsPerUnit = 10 * gridSize;
 
   const handleDoubleClick = (e) => {
-    e.preventDefault(); // Prevent any default double-click behavior
-    e.stopPropagation(); // Prevent triggering other handlers
-    onEdit(); // Invoke the edit handler passed from Canvas
+    e.preventDefault();
+    e.stopPropagation();
+    onEdit(item);
   };
 
   const handleClick = (e) => {
     e.stopPropagation();
-    onSelect(id); // Invoke the select handler passed from Canvas
+    onSelect(id);
   };
 
   return (
     <g
       className="canvas-item"
       onMouseDown={(e) => handleItemMouseDown(e, item)}
-      onDoubleClick={handleDoubleClick} // Handle double-click to edit
-      onClick={handleClick} // Handle single click to select
-      tabIndex={0} // Make focusable for accessibility
+      onDoubleClick={handleDoubleClick}
+      onClick={handleClick}
+      tabIndex={0}
       role="button"
       aria-label={`Item ${id}`}
-      aria-pressed={isSelected} // Indicate selection status
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          onEdit();
-        }
-      }}
+      aria-pressed={isSelected}
     >
       <rect
         x={x}
         y={y}
-        width={width}
-        height={height}
-        fill={isSelected ? "lightblue" : "grey"}
+        width={width * pixelsPerUnit}
+        height={height * pixelsPerUnit}
+        fill={color || (isSelected ? "lightblue" : "grey")}
         stroke={isSelected ? "blue" : "black"}
         strokeWidth={2 / transform.scale}
       />
-      {/* Optional: Add text or other visuals */}
-      {label && (
+      {name && (
         <text
-          x={x + width / 2}
-          y={y + height / 2}
+          x={x + (width * pixelsPerUnit) / 2}
+          y={y + (height * pixelsPerUnit) / 2}
           textAnchor="middle"
           alignmentBaseline="middle"
           fontSize={12 / transform.scale}
           fill="black"
-          pointerEvents="none" // Prevent text from capturing mouse events
+          pointerEvents="none"
         >
-          {label}
+          {name}
         </text>
       )}
     </g>
@@ -74,7 +70,8 @@ CanvasItem.propTypes = {
     y: PropTypes.number.isRequired,
     width: PropTypes.number.isRequired,
     height: PropTypes.number.isRequired,
-    label: PropTypes.string, // Optional
+    name: PropTypes.string,
+    color: PropTypes.string,
   }).isRequired,
   isSelected: PropTypes.bool,
   onSelect: PropTypes.func.isRequired,
@@ -85,6 +82,7 @@ CanvasItem.propTypes = {
     x: PropTypes.number.isRequired,
     y: PropTypes.number.isRequired,
   }).isRequired,
+  gridSize: PropTypes.number.isRequired,
 };
 
 export default React.memo(CanvasItem);

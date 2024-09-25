@@ -1,12 +1,19 @@
 // src/hooks/useGridLines.js
+
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
+import {
+  selectShowGrid,
+  selectGridSize,
+  selectGridOpacity,
+} from "../redux/slices/gridSlice";
+import { selectTransform } from "../redux/slices/transformSlice";
 
 const useGridLines = (viewBox) => {
-  const showGrid = useSelector((state) => state.layout.showGrid);
-  const gridSize = useSelector((state) => state.layout.gridSize);
-  const gridOpacity = useSelector((state) => state.layout.gridOpacity);
-  const transform = useSelector((state) => state.layout.transform);
+  const showGrid = useSelector(selectShowGrid);
+  const gridSize = useSelector(selectGridSize);
+  const gridOpacity = useSelector(selectGridOpacity);
+  const transform = useSelector(selectTransform);
 
   const gridLines = useMemo(() => {
     if (!showGrid) return null;
