@@ -7,13 +7,12 @@ import {
   Button,
   Box,
   TextField,
-  Switch,
-  FormControlLabel,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Grid,
+  Tooltip,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { SketchPicker } from "react-color";
@@ -29,28 +28,25 @@ import {
   selectShowGrid,
   selectSnapToGrid,
 } from "../redux/slices/gridSlice";
-import { setPolylineMode } from "../redux/slices/polylineSlice";
+import { setPolylineMode, addPolyline } from "../redux/slices/polylineSlice";
 import { clearCanvas } from "../redux/thunks/canvasThunks";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import UndoIcon from "@mui/icons-material/Undo";
 import RedoIcon from "@mui/icons-material/Redo";
+import PolylineIcon from "@mui/icons-material/Timeline"; // New icon for Polyline
 
-const AnimatedButton = styled(Button)(({ theme }) => ({
-  transition: "all 0.3s ease",
-  backgroundColor: theme.palette.secondary.main,
-  color: theme.palette.primary.contrastText,
-  fontWeight: "bold",
-  textTransform: "none",
-  borderRadius: 20,
-  fontFamily: theme.typography.fontFamily,
+// Styled Button using Material UI's built-in styling
+const ToolbarButton = styled(Button)(({ theme }) => ({
+  borderRadius: "8px",
+  fontWeight: 600,
+  padding: "8px 16px",
+  transition: "transform 0.2s ease",
   "&:hover": {
-    backgroundColor: theme.palette.secondary.dark,
     transform: "translateY(-2px)",
-    boxShadow: theme.shadows[4],
+    boxShadow: theme.shadows[2],
   },
-  marginBottom: theme.spacing(1),
 }));
 
 const Toolbar = () => {
@@ -84,97 +80,108 @@ const Toolbar = () => {
     setItemHeight(5);
   };
 
+  const handleAddPolyline = () => {
+    dispatch(setPolylineMode(true));
+  };
+
   return (
     <Paper
       sx={{
         width: 300,
-        p: 2,
+        p: 3,
         display: "flex",
         flexDirection: "column",
         gap: 2,
         overflowY: "auto",
         borderRight: "none",
-        bgcolor: "primary.main",
+        bgcolor: "background.default",
         minHeight: "calc(100vh - 80px)",
         boxShadow: "none",
       }}
       elevation={0}
     >
-      <AnimatedButton
+      <ToolbarButton
         variant="contained"
         onClick={() => setOpenDialog(true)}
         startIcon={<AddBoxIcon />}
+        color="primary"
       >
         Add Item
-      </AnimatedButton>
-      <AnimatedButton
+      </ToolbarButton>
+      <ToolbarButton
+        variant="contained"
+        onClick={handleAddPolyline}
+        startIcon={<PolylineIcon />}
+        color="secondary"
+      >
+        Add Polyline
+      </ToolbarButton>
+      <ToolbarButton
         variant="contained"
         onClick={() => dispatch(clearCanvas())}
         startIcon={<DeleteSweepIcon />}
+        color="secondary"
       >
         Clear Canvas
-      </AnimatedButton>
-      <AnimatedButton
+      </ToolbarButton>
+      <ToolbarButton
         variant="contained"
         onClick={() => dispatch(requestFitToView())}
         startIcon={<ZoomOutMapIcon />}
+        color="primary"
       >
         Fit to View
-      </AnimatedButton>
-      <AnimatedButton
+      </ToolbarButton>
+      <ToolbarButton
         variant="contained"
         onClick={() => dispatch(undo())}
         startIcon={<UndoIcon />}
+        color="primary"
       >
         Undo
-      </AnimatedButton>
-      <AnimatedButton
+      </ToolbarButton>
+      <ToolbarButton
         variant="contained"
         onClick={() => dispatch(redo())}
         startIcon={<RedoIcon />}
+        color="primary"
       >
         Redo
-      </AnimatedButton>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={showGrid}
-            onChange={() => dispatch(toggleGrid())}
-            color="secondary"
-          />
-        }
-        label="Show Grid"
-        sx={{ mt: 1, color: "secondary.main", fontFamily: "inherit" }}
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            checked={snapToGrid}
-            onChange={() => dispatch(toggleSnapToGrid())}
-            color="secondary"
-          />
-        }
-        label="Snap to Grid"
-        sx={{ color: "secondary.main", fontFamily: "inherit" }}
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            checked={polylineMode}
-            onChange={() => dispatch(setPolylineMode(!polylineMode))}
-            color="secondary"
-          />
-        }
-        label="Draw Polyline"
-        sx={{ color: "secondary.main", fontFamily: "inherit" }}
-      />
+      </ToolbarButton>
+      <Tooltip title="Toggle Grid Visibility">
+        <Box>
+          <ToolbarButton
+            variant="outlined"
+            onClick={() => dispatch(toggleGrid())}
+            color="primary"
+            fullWidth
+            sx={{ textTransform: "none" }}
+          >
+            {showGrid ? "Hide Grid" : "Show Grid"}
+          </ToolbarButton>
+        </Box>
+      </Tooltip>
+      <Tooltip title="Toggle Snap to Grid">
+        <Box>
+          <ToolbarButton
+            variant="outlined"
+            onClick={() => dispatch(toggleSnapToGrid())}
+            color="primary"
+            fullWidth
+            sx={{ textTransform: "none" }}
+          >
+            {snapToGrid ? "Disable Snap" : "Enable Snap to Grid"}
+          </ToolbarButton>
+        </Box>
+      </Tooltip>
+
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontFamily: "inherit" }}>Add New Item</DialogTitle>
+        <DialogTitle>Add New Item</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
@@ -218,9 +225,13 @@ const Toolbar = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <AnimatedButton onClick={handleAddItem} variant="contained">
+          <ToolbarButton
+            onClick={handleAddItem}
+            variant="contained"
+            color="primary"
+          >
             Add
-          </AnimatedButton>
+          </ToolbarButton>
         </DialogActions>
       </Dialog>
     </Paper>

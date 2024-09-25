@@ -1,13 +1,16 @@
-// src/components/App.js
+// src/App.js
+
 import React from "react";
+import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline, Box } from "@mui/material";
+import theme from "../theme"; // Adjust the path based on your project structure
 import Header from "./Header";
 import Toolbar from "./Toolbar";
 import Canvas from "./Canvas";
 
 const App = () => {
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box
         sx={{
@@ -17,7 +20,7 @@ const App = () => {
           overflow: "hidden",
         }}
       >
-        <Header sx={{ borderBottom: "1px solid rgba(0, 0, 0, 0.12)" }} />
+        <Header />
         <Box
           sx={{
             display: "flex",
@@ -29,7 +32,7 @@ const App = () => {
           <Canvas />
         </Box>
       </Box>
-    </>
+    </ThemeProvider>
   );
 };
 

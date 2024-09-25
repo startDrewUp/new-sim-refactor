@@ -1,5 +1,3 @@
-// src/components/CanvasItem.js
-
 import React from "react";
 import PropTypes from "prop-types";
 
@@ -15,24 +13,35 @@ const CanvasItem = ({
   const { id, x, y, width, height, name, color } = item;
   const pixelsPerUnit = 10 * gridSize;
 
-  const handleDoubleClick = (e) => {
-    e.preventDefault();
+  // Handle single left-click for selection
+  const handleSingleClick = (e) => {
+    e.stopPropagation();
+    onSelect(id);
+  };
+
+  // Handle right-click for editing
+  const handleContextMenu = (e) => {
+    e.preventDefault(); // Prevent the default context menu
     e.stopPropagation();
     onEdit(item);
   };
 
-  const handleClick = (e) => {
-    e.stopPropagation();
-    onSelect(id);
+  // Handle keyboard events for accessibility
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === "F2") {
+      e.preventDefault();
+      onEdit(item);
+    }
   };
 
   return (
     <g
       className="canvas-item"
       onMouseDown={(e) => handleItemMouseDown(e, item)}
-      onDoubleClick={handleDoubleClick}
-      onClick={handleClick}
-      tabIndex={0}
+      onClick={handleSingleClick}
+      onContextMenu={handleContextMenu}
+      onKeyDown={handleKeyDown} // Keyboard event handler
+      tabIndex={0} // Makes the element focusable
       role="button"
       aria-label={`Item ${id}`}
       aria-pressed={isSelected}

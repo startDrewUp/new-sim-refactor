@@ -22,18 +22,13 @@ import {
   loadCanvasStateThunk,
 } from "../redux/thunks/canvasThunks";
 
-const AnimatedButton = styled(Button)(({ theme }) => ({
-  position: "relative",
-  overflow: "hidden",
-  borderRadius: 20,
+// Styled Button using Material UI's built-in styling
+const HeaderButton = styled(Button)(({ theme }) => ({
+  borderRadius: "8px",
+  fontWeight: 600,
   padding: "8px 16px",
-  fontWeight: "bold",
-  textTransform: "none",
-  fontFamily: theme.typography.fontFamily,
-  transition: "background-color 0.3s ease, transform 0.2s ease",
-  color: theme.palette.secondary.main,
+  transition: "transform 0.2s ease",
   "&:hover": {
-    backgroundColor: theme.palette.primary.light,
     transform: "translateY(-2px)",
   },
 }));
@@ -76,34 +71,32 @@ const Header = () => {
 
   return (
     <>
-      <AppBar
-        position="static"
-        sx={{ bgcolor: "primary.main", boxShadow: "none" }}
-      >
-        <MuiToolbar sx={{ minHeight: "80px" }}>
+      <AppBar position="static">
+        <MuiToolbar>
           <Typography
-            variant="h3"
+            variant="h4"
             component="div"
             sx={{
               flexGrow: 1,
-              fontWeight: "bold",
-              letterSpacing: "1px",
-              fontFamily: "inherit",
-              color: "secondary.main",
+              fontWeight: 700,
+              letterSpacing: "0.5px",
             }}
           >
             Facility Layout
           </Typography>
           <Box sx={{ display: "flex", gap: 2 }}>
             <CanvasSettings />
-            <AnimatedButton startIcon={<HomeIcon />}>Home</AnimatedButton>
-            <AnimatedButton startIcon={<SettingsIcon />}>
-              Settings
-            </AnimatedButton>
-            <AnimatedButton startIcon={<HelpIcon />}>Help</AnimatedButton>
-            <AnimatedButton startIcon={<SaveIcon />} onClick={handleSaveCanvas}>
+            <HeaderButton startIcon={<HomeIcon />}>Home</HeaderButton>
+            <HeaderButton startIcon={<SettingsIcon />}>Settings</HeaderButton>
+            <HeaderButton startIcon={<HelpIcon />}>Help</HeaderButton>
+            <HeaderButton
+              startIcon={<SaveIcon />}
+              variant="contained"
+              color="primary"
+              onClick={handleSaveCanvas}
+            >
               Save Canvas
-            </AnimatedButton>
+            </HeaderButton>
             <input
               accept=".json"
               style={{ display: "none" }}
@@ -112,9 +105,14 @@ const Header = () => {
               onChange={handleLoadCanvas}
             />
             <label htmlFor="load-canvas-file">
-              <AnimatedButton component="span" startIcon={<UploadIcon />}>
+              <HeaderButton
+                component="span"
+                startIcon={<UploadIcon />}
+                variant="contained"
+                color="secondary"
+              >
                 Load Canvas
-              </AnimatedButton>
+              </HeaderButton>
             </label>
           </Box>
         </MuiToolbar>
