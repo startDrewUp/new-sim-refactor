@@ -29,7 +29,12 @@ const ItemEditDialog = ({ item, open, onClose }) => {
   }, [item]);
 
   const handleSave = () => {
-    dispatch(updateItem({ id: item.id, name, color, width, height }));
+    dispatch(
+      updateItem({
+        id: item.id,
+        changes: { name, color, width, height },
+      })
+    );
     onClose();
   };
 

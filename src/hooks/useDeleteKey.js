@@ -1,24 +1,28 @@
 // src/hooks/useDeleteKey.js
 
 import { useCallback } from "react";
-import { useDispatch } from "react-redux";
-import { deleteSelectedItems } from "../redux/slices/layoutSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  deleteSelectedItems,
+  selectSelectedItemId,
+} from "../redux/slices/layoutSlice";
 
-const useDeleteKey = (selectedItems) => {
+const useDeleteKey = () => {
   const dispatch = useDispatch();
+  const selectedItemId = useSelector(selectSelectedItemId);
 
-  const handleKeyDown = useCallback(
+  const handleDeleteKey = useCallback(
     (e) => {
       if (e.key === "Delete" || e.key === "Backspace") {
-        if (selectedItems.size > 0) {
-          dispatch(deleteSelectedItems(Array.from(selectedItems)));
+        if (selectedItemId) {
+          dispatch(deleteSelectedItems([selectedItemId]));
         }
       }
     },
-    [selectedItems, dispatch]
+    [dispatch, selectedItemId]
   );
 
-  return handleKeyDown;
+  return handleDeleteKey;
 };
 
 export default useDeleteKey;

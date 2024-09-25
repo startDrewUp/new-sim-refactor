@@ -1,51 +1,46 @@
-// src/redux/slices/layoutSlice.js
+import {
+  createSlice,
+  createEntityAdapter,
+  createSelector,
+} from "@reduxjs/toolkit";
 
-import { createSlice } from "@reduxjs/toolkit";
+const itemsAdapter = createEntityAdapter();
 
-const initialState = {
-  items: [],
+const initialState = itemsAdapter.getInitialState({
   addItemRequest: null,
   fitToViewRequest: false,
   selectedItemId: null,
   history: [],
   historyIndex: -1,
-};
+});
 
 const layoutSlice = createSlice({
   name: "layout",
   initialState,
   reducers: {
     addItem: (state, action) => {
-      state.items.push(action.payload);
+      itemsAdapter.addOne(state, action.payload);
       layoutSlice.caseReducers.saveHistory(state);
     },
     updateItem: (state, action) => {
-      const { id, updates } = action.payload;
-      const index = state.items.findIndex((item) => item.id === id);
-      if (index !== -1) {
-        state.items[index] = { ...state.items[index], ...updates };
-        layoutSlice.caseReducers.saveHistory(state);
-      }
+      itemsAdapter.updateOne(state, action.payload);
+      layoutSlice.caseReducers.saveHistory(state);
+    },
+    deleteItem: (state, action) => {
+      itemsAdapter.removeOne(state, action.payload);
+      layoutSlice.caseReducers.saveHistory(state);
+    },
+    clearItems: (state) => {
+      itemsAdapter.removeAll(state);
+      layoutSlice.caseReducers.saveHistory(state);
     },
     updateItemPosition: (state, action) => {
       const { id, x, y } = action.payload;
-      const index = state.items.findIndex((item) => item.id === id);
-      if (index !== -1) {
-        state.items[index].x = x;
-        state.items[index].y = y;
-        layoutSlice.caseReducers.saveHistory(state);
-      }
+      itemsAdapter.updateOne(state, { id, changes: { x, y } });
+      layoutSlice.caseReducers.saveHistory(state);
     },
     deleteSelectedItems: (state, action) => {
-      const selectedIds = action.payload;
-      state.items = state.items.filter(
-        (item) => !selectedIds.includes(item.id)
-      );
-      layoutSlice.caseReducers.saveHistory(state);
-      state.selectedItemId = null;
-    },
-    clearItems: (state) => {
-      state.items = [];
+      itemsAdapter.removeMany(state, action.payload);
       state.selectedItemId = null;
       layoutSlice.caseReducers.saveHistory(state);
     },
@@ -61,9 +56,6 @@ const layoutSlice = createSlice({
     clearFitToViewRequest: (state) => {
       state.fitToViewRequest = false;
     },
-    loadCanvasState: (state, action) => {
-      return { ...state, ...action.payload };
-    },
     selectItem: (state, action) => {
       state.selectedItemId = action.payload;
     },
@@ -73,7 +65,8 @@ const layoutSlice = createSlice({
     saveHistory: (state) => {
       state.history = state.history.slice(0, state.historyIndex + 1);
       const currentState = {
-        items: JSON.parse(JSON.stringify(state.items)),
+        items: itemsAdapter.getSelectors().selectAll(state),
+        selectedItemId: state.selectedItemId,
       };
       state.history.push(currentState);
       state.historyIndex++;
@@ -86,15 +79,22 @@ const layoutSlice = createSlice({
       if (state.historyIndex > 0) {
         state.historyIndex--;
         const prevState = state.history[state.historyIndex];
-        state.items = JSON.parse(JSON.stringify(prevState.items));
+        itemsAdapter.setAll(state, prevState.items);
+        state.selectedItemId = prevState.selectedItemId;
       }
     },
     redo: (state) => {
       if (state.historyIndex < state.history.length - 1) {
         state.historyIndex++;
         const nextState = state.history[state.historyIndex];
-        state.items = JSON.parse(JSON.stringify(nextState.items));
+        itemsAdapter.setAll(state, nextState.items);
+        state.selectedItemId = nextState.selectedItemId;
       }
+    },
+    loadCanvasState: (state, action) => {
+      const { items, ...rest } = action.payload;
+      itemsAdapter.setAll(state, items);
+      Object.assign(state, rest);
     },
   },
 });
@@ -102,24 +102,36 @@ const layoutSlice = createSlice({
 export const {
   addItem,
   updateItem,
+  deleteItem,
+  clearItems,
   updateItemPosition,
   deleteSelectedItems,
-  clearItems,
   requestAddItem,
   clearAddItemRequest,
   requestFitToView,
   clearFitToViewRequest,
-  loadCanvasState,
   selectItem,
   deselectItems,
   undo,
   redo,
+  loadCanvasState,
 } = layoutSlice.actions;
 
 export default layoutSlice.reducer;
 
 // Selectors
-export const selectItems = (state) => state.layout.items;
+const itemsSelectors = itemsAdapter.getSelectors((state) => state.layout);
+
+export const selectItems = itemsSelectors.selectAll;
+export const selectItemById = itemsSelectors.selectById;
+export const selectItemIds = itemsSelectors.selectIds;
+export const selectTotalItems = itemsSelectors.selectTotal;
+
 export const selectSelectedItemId = (state) => state.layout.selectedItemId;
 export const selectAddItemRequest = (state) => state.layout.addItemRequest;
 export const selectFitToViewRequest = (state) => state.layout.fitToViewRequest;
+
+export const selectSelectedItem = createSelector(
+  [selectItems, selectSelectedItemId],
+  (items, selectedId) => items.find((item) => item.id === selectedId)
+);

@@ -13,20 +13,17 @@ const CanvasItem = ({
   const { id, x, y, width, height, name, color } = item;
   const pixelsPerUnit = 10 * gridSize;
 
-  // Handle single left-click for selection
   const handleSingleClick = (e) => {
     e.stopPropagation();
     onSelect(id);
   };
 
-  // Handle right-click for editing
   const handleContextMenu = (e) => {
-    e.preventDefault(); // Prevent the default context menu
+    e.preventDefault();
     e.stopPropagation();
     onEdit(item);
   };
 
-  // Handle keyboard events for accessibility
   const handleKeyDown = (e) => {
     if (e.key === "Enter" || e.key === "F2") {
       e.preventDefault();
@@ -40,8 +37,8 @@ const CanvasItem = ({
       onMouseDown={(e) => handleItemMouseDown(e, item)}
       onClick={handleSingleClick}
       onContextMenu={handleContextMenu}
-      onKeyDown={handleKeyDown} // Keyboard event handler
-      tabIndex={0} // Makes the element focusable
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
       role="button"
       aria-label={`Item ${id}`}
       aria-pressed={isSelected}

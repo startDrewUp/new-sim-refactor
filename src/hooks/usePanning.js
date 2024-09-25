@@ -10,16 +10,16 @@ const usePanning = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  const handleMouseDown = useCallback((e) => {
+  const handlePanStart = useCallback((e) => {
     if (e.button === 1) {
-      // Only initiate panning on middle mouse button
+      // Middle mouse button
       e.preventDefault();
       setIsDragging(true);
       setDragStart({ x: e.clientX, y: e.clientY });
     }
   }, []);
 
-  const handleMouseMove = useCallback(
+  const handlePanMove = useCallback(
     (e) => {
       if (isDragging) {
         const dx = (e.clientX - dragStart.x) / transform.scale;
@@ -37,15 +37,15 @@ const usePanning = () => {
     [isDragging, dragStart, transform, dispatch]
   );
 
-  const handleMouseUp = useCallback(() => {
+  const handlePanEnd = useCallback(() => {
     setIsDragging(false);
   }, []);
 
   return {
     isDragging,
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
+    handlePanStart,
+    handlePanMove,
+    handlePanEnd,
   };
 };
 

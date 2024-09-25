@@ -1,12 +1,15 @@
 // src/hooks/useFitToView.js
+
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setTransform } from "../redux/slices/layoutSlice";
+import { selectItems } from "../redux/slices/layoutSlice";
+import { selectPolylines } from "../redux/slices/polylineSlice";
+import { setTransform } from "../redux/slices/transformSlice";
 
 const useFitToView = (svgRef, gRef) => {
   const dispatch = useDispatch();
-  const items = useSelector((state) => state.layout.items);
-  const polylines = useSelector((state) => state.layout.polylines);
+  const items = useSelector(selectItems);
+  const polylines = useSelector(selectPolylines);
 
   const fitToView = useCallback(() => {
     if (!svgRef.current || !gRef.current) return;
@@ -32,7 +35,7 @@ const useFitToView = (svgRef, gRef) => {
 
     // Include polylines
     polylines.forEach((polyline) => {
-      polyline.forEach((point) => {
+      polyline.points.forEach((point) => {
         minX = Math.min(minX, point.x);
         minY = Math.min(minY, point.y);
         maxX = Math.max(maxX, point.x);
@@ -52,7 +55,7 @@ const useFitToView = (svgRef, gRef) => {
 
     const scaleX = viewportWidth / bboxWidth;
     const scaleY = viewportHeight / bboxHeight;
-    const newScale = Math.min(scaleX, scaleY) * 0.9;
+    const newScale = Math.min(scaleX, scaleY) * 0.9; // 90% to add some padding
 
     const newX = bboxCenterX - viewportWidth / 2 / newScale;
     const newY = bboxCenterY - viewportHeight / 2 / newScale;

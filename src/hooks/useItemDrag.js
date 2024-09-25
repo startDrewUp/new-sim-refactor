@@ -1,93 +1,50 @@
 // src/hooks/useItemDrag.js
 
-import { useState, useCallback, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { updateItemPosition } from "../redux/slices/layoutSlice";
+import { selectTransform } from "../redux/slices/transformSlice";
+import { selectSnapToGrid, selectGridSize } from "../redux/slices/gridSlice";
 
-const useItemDrag = (svgRef, gRef, snapToGrid, gridSize) => {
+const useItemDrag = () => {
   const dispatch = useDispatch();
-  const [draggingItem, setDraggingItem] = useState(null);
+  const transform = useSelector(selectTransform);
+  const snapToGrid = useSelector(selectSnapToGrid);
+  const gridSize = useSelector(selectGridSize);
 
   const handleItemMouseDown = useCallback(
     (e, item) => {
       e.stopPropagation();
+      const startX = e.clientX;
+      const startY = e.clientY;
 
-      const svgElement = svgRef.current;
-      const gElement = gRef.current;
+      const handleItemMove = (moveEvent) => {
+        const dx = (moveEvent.clientX - startX) / transform.scale;
+        const dy = (moveEvent.clientY - startY) / transform.scale;
 
-      if (!svgElement || !gElement || !item) return;
+        let newX = item.x + dx;
+        let newY = item.y + dy;
 
-      const point = svgElement.createSVGPoint();
-      point.x = e.clientX;
-      point.y = e.clientY;
-
-      const transformedPoint = point.matrixTransform(
-        gElement.getScreenCTM().inverse()
-      );
-
-      setDraggingItem({
-        id: item.id,
-        offsetX: transformedPoint.x - item.x,
-        offsetY: transformedPoint.y - item.y,
-      });
-    },
-    [svgRef, gRef]
-  );
-
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (draggingItem) {
-        const svgElement = svgRef.current;
-        const gElement = gRef.current;
-
-        if (!svgElement || !gElement) return;
-
-        const point = svgElement.createSVGPoint();
-        point.x = e.clientX;
-        point.y = e.clientY;
-
-        const transformedPoint = point.matrixTransform(
-          gElement.getScreenCTM().inverse()
-        );
-
-        let newX = transformedPoint.x - draggingItem.offsetX;
-        let newY = transformedPoint.y - draggingItem.offsetY;
-
-        // Snap to grid if enabled
         if (snapToGrid) {
-          const gridSizePx = gridSize * 10; // Assuming 10 pixels per unit
-          newX = Math.round(newX / gridSizePx) * gridSizePx;
-          newY = Math.round(newY / gridSizePx) * gridSizePx;
+          newX = Math.round(newX / gridSize) * gridSize;
+          newY = Math.round(newY / gridSize) * gridSize;
         }
 
-        dispatch(updateItemPosition({ id: draggingItem.id, x: newX, y: newY }));
-      }
-    };
+        dispatch(updateItemPosition({ id: item.id, x: newX, y: newY }));
+      };
 
-    const handleMouseUp = () => {
-      if (draggingItem) {
-        setDraggingItem(null);
-      }
-    };
+      const handleItemMoveEnd = () => {
+        window.removeEventListener("mousemove", handleItemMove);
+        window.removeEventListener("mouseup", handleItemMoveEnd);
+      };
 
-    if (draggingItem) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    } else {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    }
+      window.addEventListener("mousemove", handleItemMove);
+      window.addEventListener("mouseup", handleItemMoveEnd);
+    },
+    [dispatch, transform.scale, snapToGrid, gridSize]
+  );
 
-    // Cleanup function to ensure event listeners are removed
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [draggingItem, svgRef, gRef, snapToGrid, gridSize, dispatch]);
-
-  return {
-    handleItemMouseDown,
-  };
+  return { handleItemMouseDown };
 };
 
 export default useItemDrag;

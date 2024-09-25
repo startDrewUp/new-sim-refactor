@@ -1,26 +1,20 @@
-// src/hooks/useItemEditing.js
 import { useState, useCallback } from "react";
+import { useSelector } from "react-redux";
+import { selectItemById } from "../redux/slices/layoutSlice";
 
-/**
- * Custom hook to manage the state of the currently editing item.
- * @returns {Object} - Contains the editing item and handlers to manage it.
- */
 const useItemEditing = () => {
-  const [editingItem, setEditingItem] = useState(null);
+  const [editingItemId, setEditingItemId] = useState(null);
 
-  /**
-   * Sets the item to be edited.
-   * @param {Object} item - The item to edit.
-   */
+  const editingItem = useSelector((state) =>
+    editingItemId ? selectItemById(state, editingItemId) : null
+  );
+
   const handleEditItem = useCallback((item) => {
-    setEditingItem(item);
+    setEditingItemId(item.id);
   }, []);
 
-  /**
-   * Closes the edit dialog by resetting the editing item.
-   */
   const handleCloseEdit = useCallback(() => {
-    setEditingItem(null);
+    setEditingItemId(null);
   }, []);
 
   return { editingItem, handleEditItem, handleCloseEdit };

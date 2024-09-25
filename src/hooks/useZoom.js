@@ -1,5 +1,6 @@
 // src/hooks/useZoom.js
-import { useCallback, useEffect } from "react";
+
+import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransform, selectTransform } from "../redux/slices/transformSlice";
 
@@ -9,60 +10,37 @@ const useZoom = (svgRef) => {
 
   const handleWheel = useCallback(
     (e) => {
+      e.preventDefault();
+      const { deltaY } = e;
+      const scaleFactor = deltaY > 0 ? 0.9 : 1.1;
+
       const svgElement = svgRef.current;
-
-      // Get the bounding rectangle of the SVG element
       const rect = svgElement.getBoundingClientRect();
-      const { left, top } = rect;
+      const offsetX = e.clientX - rect.left;
+      const offsetY = e.clientY - rect.top;
 
-      // Get the mouse position relative to the SVG element
-      const mouseX = e.clientX - left;
-      const mouseY = e.clientY - top;
+      const pointBeforeZoom = {
+        x: offsetX / transform.scale + transform.x,
+        y: offsetY / transform.scale + transform.y,
+      };
 
-      // Determine the scale factor
-      const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      const newScale = transform.scale * scaleFactor;
 
-      // Calculate the new scale, clamped between min and max values
-      const newScale = Math.min(
-        Math.max(transform.scale * scaleFactor, 0.1),
-        10
-      );
+      const pointAfterZoom = {
+        x: offsetX / newScale + transform.x,
+        y: offsetY / newScale + transform.y,
+      };
 
-      // Compute the world coordinates before zooming
-      const worldX = mouseX / transform.scale + transform.x;
-      const worldY = mouseY / transform.scale + transform.y;
-
-      // Compute the new translation to keep the world point under the cursor stationary
-      const newX = worldX - mouseX / newScale;
-      const newY = worldY - mouseY / newScale;
-
-      // Dispatch the new transform
       dispatch(
         setTransform({
           scale: newScale,
-          x: newX,
-          y: newY,
+          x: transform.x + (pointBeforeZoom.x - pointAfterZoom.x),
+          y: transform.y + (pointBeforeZoom.y - pointAfterZoom.y),
         })
       );
     },
-    [dispatch, svgRef, transform]
+    [dispatch, transform, svgRef]
   );
-
-  useEffect(() => {
-    const svgElement = svgRef.current;
-    if (svgElement) {
-      const wheelListener = (e) => {
-        e.preventDefault();
-        handleWheel(e);
-      };
-
-      svgElement.addEventListener("wheel", wheelListener, { passive: false });
-
-      return () => {
-        svgElement.removeEventListener("wheel", wheelListener);
-      };
-    }
-  }, [handleWheel, svgRef]);
 
   return { handleWheel };
 };

@@ -6,6 +6,7 @@ import {
   requestAddItem,
   requestFitToView,
   loadCanvasState,
+  selectItems,
 } from "../slices/layoutSlice";
 import { clearPolylines } from "../slices/polylineSlice";
 import { resetGridSettings } from "../slices/gridSlice";
@@ -34,8 +35,12 @@ export const fitToViewThunk = createAsyncThunk(
 
 export const saveCanvasState = () => (dispatch, getState) => {
   const state = getState();
+  const items = selectItems(state);
   const canvasState = {
-    layout: state.layout,
+    layout: {
+      ...state.layout,
+      items,
+    },
     polyline: state.polyline,
     grid: state.grid,
     transform: state.transform,
@@ -57,6 +62,7 @@ export const saveCanvasState = () => (dispatch, getState) => {
 export const loadCanvasStateThunk = createAsyncThunk(
   "layout/loadCanvasState",
   async (canvasState, { dispatch }) => {
-    dispatch(loadCanvasState(canvasState));
+    dispatch(loadCanvasState(canvasState.layout));
+    // You might need to dispatch actions to load state for other slices as well
   }
 );
