@@ -1,5 +1,3 @@
-// src/components/Toolbar.js
-
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -13,6 +11,11 @@ import {
   DialogActions,
   Grid,
   Tooltip,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { SketchPicker } from "react-color";
@@ -35,18 +38,16 @@ import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import UndoIcon from "@mui/icons-material/Undo";
 import RedoIcon from "@mui/icons-material/Redo";
-import PolylineIcon from "@mui/icons-material/Timeline"; // New icon for Polyline
+import PolylineIcon from "@mui/icons-material/Timeline";
+import GridOnIcon from "@mui/icons-material/GridOn";
+import GridOffIcon from "@mui/icons-material/GridOff";
 
-// Styled Button using Material UI's built-in styling
 const ToolbarButton = styled(Button)(({ theme }) => ({
-  borderRadius: "8px",
-  fontWeight: 600,
-  padding: "8px 16px",
-  transition: "transform 0.2s ease",
-  "&:hover": {
-    transform: "translateY(-2px)",
-    boxShadow: theme.shadows[2],
-  },
+  justifyContent: "flex-start",
+  width: "100%",
+  textAlign: "left",
+  paddingLeft: theme.spacing(2),
+  paddingRight: theme.spacing(2),
 }));
 
 const Toolbar = () => {
@@ -87,93 +88,82 @@ const Toolbar = () => {
   return (
     <Paper
       sx={{
-        width: 300,
-        p: 3,
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
+        width: 240,
+        height: "100%",
         overflowY: "auto",
-        borderRight: "none",
-        bgcolor: "background.default",
-        minHeight: "calc(100vh - 80px)",
-        boxShadow: "none",
+        bgcolor: "background.paper",
       }}
       elevation={0}
     >
-      <ToolbarButton
-        variant="contained"
-        onClick={() => setOpenDialog(true)}
-        startIcon={<AddBoxIcon />}
-        color="primary"
-      >
-        Add Item
-      </ToolbarButton>
-      <ToolbarButton
-        variant="contained"
-        onClick={handleAddPolyline}
-        startIcon={<PolylineIcon />}
-        color="secondary"
-      >
-        Add Polyline
-      </ToolbarButton>
-      <ToolbarButton
-        variant="contained"
-        onClick={() => dispatch(clearCanvas())}
-        startIcon={<DeleteSweepIcon />}
-        color="secondary"
-      >
-        Clear Canvas
-      </ToolbarButton>
-      <ToolbarButton
-        variant="contained"
-        onClick={() => dispatch(requestFitToView())}
-        startIcon={<ZoomOutMapIcon />}
-        color="primary"
-      >
-        Fit to View
-      </ToolbarButton>
-      <ToolbarButton
-        variant="contained"
-        onClick={() => dispatch(undo())}
-        startIcon={<UndoIcon />}
-        color="primary"
-      >
-        Undo
-      </ToolbarButton>
-      <ToolbarButton
-        variant="contained"
-        onClick={() => dispatch(redo())}
-        startIcon={<RedoIcon />}
-        color="primary"
-      >
-        Redo
-      </ToolbarButton>
-      <Tooltip title="Toggle Grid Visibility">
-        <Box>
+      <List>
+        <ListItem>
           <ToolbarButton
-            variant="outlined"
+            startIcon={<AddBoxIcon />}
+            onClick={() => setOpenDialog(true)}
+          >
+            Add Item
+          </ToolbarButton>
+        </ListItem>
+        <ListItem>
+          <ToolbarButton
+            startIcon={<PolylineIcon />}
+            onClick={handleAddPolyline}
+          >
+            Add Polyline
+          </ToolbarButton>
+        </ListItem>
+        <Divider />
+        <ListItem>
+          <ToolbarButton
+            startIcon={<DeleteSweepIcon />}
+            onClick={() => dispatch(clearCanvas())}
+          >
+            Clear Canvas
+          </ToolbarButton>
+        </ListItem>
+        <ListItem>
+          <ToolbarButton
+            startIcon={<ZoomOutMapIcon />}
+            onClick={() => dispatch(requestFitToView())}
+          >
+            Fit to View
+          </ToolbarButton>
+        </ListItem>
+        <Divider />
+        <ListItem>
+          <ToolbarButton
+            startIcon={<UndoIcon />}
+            onClick={() => dispatch(undo())}
+          >
+            Undo
+          </ToolbarButton>
+        </ListItem>
+        <ListItem>
+          <ToolbarButton
+            startIcon={<RedoIcon />}
+            onClick={() => dispatch(redo())}
+          >
+            Redo
+          </ToolbarButton>
+        </ListItem>
+        <Divider />
+        <ListItem>
+          <ToolbarButton
+            startIcon={showGrid ? <GridOnIcon /> : <GridOffIcon />}
             onClick={() => dispatch(toggleGrid())}
-            color="primary"
-            fullWidth
-            sx={{ textTransform: "none" }}
           >
             {showGrid ? "Hide Grid" : "Show Grid"}
           </ToolbarButton>
-        </Box>
-      </Tooltip>
-      <Tooltip title="Toggle Snap to Grid">
-        <Box>
+        </ListItem>
+        <ListItem>
           <ToolbarButton
-            variant="outlined"
+            startIcon={snapToGrid ? <GridOnIcon /> : <GridOffIcon />}
             onClick={() => dispatch(toggleSnapToGrid())}
-            color="primary"
-            fullWidth
-            sx={{ textTransform: "none" }}
           >
             {snapToGrid ? "Disable Snap" : "Enable Snap to Grid"}
           </ToolbarButton>
-        </Box>
-      </Tooltip>
+        </ListItem>
+      </List>
 
       <Dialog
         open={openDialog}
@@ -225,13 +215,9 @@ const Toolbar = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <ToolbarButton
-            onClick={handleAddItem}
-            variant="contained"
-            color="primary"
-          >
+          <Button onClick={handleAddItem} variant="contained" color="primary">
             Add
-          </ToolbarButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </Paper>

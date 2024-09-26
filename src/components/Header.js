@@ -1,5 +1,3 @@
-// src/components/Header.js
-
 import React, { useState } from "react";
 import {
   AppBar,
@@ -8,12 +6,12 @@ import {
   Button,
   Box,
   Snackbar,
+  IconButton,
 } from "@mui/material";
 import { styled } from "@mui/system";
-import CanvasSettings from "./CanvasSettings";
-import HomeIcon from "@mui/icons-material/Home";
-import SettingsIcon from "@mui/icons-material/Settings";
-import HelpIcon from "@mui/icons-material/Help";
+import MenuIcon from "@mui/icons-material/Menu";
+import SearchIcon from "@mui/icons-material/Search";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SaveIcon from "@mui/icons-material/Save";
 import UploadIcon from "@mui/icons-material/Upload";
 import { useDispatch } from "react-redux";
@@ -22,14 +20,10 @@ import {
   loadCanvasStateThunk,
 } from "../redux/thunks/canvasThunks";
 
-// Styled Button using Material UI's built-in styling
 const HeaderButton = styled(Button)(({ theme }) => ({
-  borderRadius: "8px",
-  fontWeight: 600,
-  padding: "8px 16px",
-  transition: "transform 0.2s ease",
+  color: theme.palette.text.primary,
   "&:hover": {
-    transform: "translateY(-2px)",
+    backgroundColor: theme.palette.action.hover,
   },
 }));
 
@@ -47,7 +41,6 @@ const Header = () => {
   const handleLoadCanvas = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Read the file content
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -71,31 +64,20 @@ const Header = () => {
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar position="static" color="default" elevation={1}>
         <MuiToolbar>
-          <Typography
-            variant="h4"
-            component="div"
-            sx={{
-              flexGrow: 1,
-              fontWeight: 700,
-              letterSpacing: "0.5px",
-            }}
-          >
+          <IconButton edge="start" color="inherit" aria-label="menu">
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1, ml: 2 }}>
             Facility Layout
           </Typography>
-          <Box sx={{ display: "flex", gap: 2 }}>
-            <CanvasSettings />
-            <HeaderButton startIcon={<HomeIcon />}>Home</HeaderButton>
-            <HeaderButton startIcon={<SettingsIcon />}>Settings</HeaderButton>
-            <HeaderButton startIcon={<HelpIcon />}>Help</HeaderButton>
-            <HeaderButton
-              startIcon={<SaveIcon />}
-              variant="contained"
-              color="primary"
-              onClick={handleSaveCanvas}
-            >
-              Save Canvas
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <IconButton color="inherit">
+              <SearchIcon />
+            </IconButton>
+            <HeaderButton startIcon={<SaveIcon />} onClick={handleSaveCanvas}>
+              Save
             </HeaderButton>
             <input
               accept=".json"
@@ -105,15 +87,13 @@ const Header = () => {
               onChange={handleLoadCanvas}
             />
             <label htmlFor="load-canvas-file">
-              <HeaderButton
-                component="span"
-                startIcon={<UploadIcon />}
-                variant="contained"
-                color="secondary"
-              >
-                Load Canvas
+              <HeaderButton component="span" startIcon={<UploadIcon />}>
+                Load
               </HeaderButton>
             </label>
+            <IconButton color="inherit">
+              <MoreVertIcon />
+            </IconButton>
           </Box>
         </MuiToolbar>
       </AppBar>
