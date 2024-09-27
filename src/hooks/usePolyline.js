@@ -32,8 +32,9 @@ const usePolyline = (svgRef, gRef) => {
         let newY = transformedPoint.y;
 
         if (snapToGrid) {
-          newX = Math.round(newX / gridSize) * gridSize;
-          newY = Math.round(newY / gridSize) * gridSize;
+          const gridSizePx = gridSize * 10;
+          newX = Math.round(newX / gridSizePx) * gridSizePx;
+          newY = Math.round(newY / gridSizePx) * gridSizePx;
         }
 
         dispatch(addPolylinePoint({ x: newX, y: newY }));
@@ -47,18 +48,6 @@ const usePolyline = (svgRef, gRef) => {
       dispatch(finalizePolyline());
     }
   }, [dispatch, currentPolyline]);
-
-  const handlePolylineSelect = useCallback(
-    (id) => {
-      dispatch(selectPolyline(id));
-    },
-    [dispatch]
-  );
-
-  const handlePolylineMouseDown = useCallback((e, polyline) => {
-    // Implement polyline dragging if needed
-    console.log("Polyline mouse down:", polyline);
-  }, []);
 
   const handleCanvasMouseMove = useCallback(
     (e) => {
@@ -74,8 +63,9 @@ const usePolyline = (svgRef, gRef) => {
         let newY = transformedPoint.y;
 
         if (snapToGrid) {
-          newX = Math.round(newX / gridSize) * gridSize;
-          newY = Math.round(newY / gridSize) * gridSize;
+          const gridSizePx = gridSize * 10;
+          newX = Math.round(newX / gridSizePx) * gridSizePx;
+          newY = Math.round(newY / gridSizePx) * gridSizePx;
         }
 
         setShadowPoint({ x: newX, y: newY });
@@ -87,8 +77,6 @@ const usePolyline = (svgRef, gRef) => {
   return {
     handleCanvasClick,
     handlePolylineFinalize,
-    handlePolylineSelect,
-    handlePolylineMouseDown,
     handleCanvasMouseMove,
     polylineMode,
     currentPolyline,

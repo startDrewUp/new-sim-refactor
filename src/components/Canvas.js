@@ -13,7 +13,6 @@ import {
   selectItems,
   selectSelectedItemId,
   selectFitToViewRequest,
-  updateHistoryAction,
 } from "../redux/slices/layoutSlice";
 import { selectTransform } from "../redux/slices/transformSlice";
 import {
@@ -22,6 +21,8 @@ import {
   selectCurrentPolyline,
   selectSelectedPolylineId,
   finalizePolyline,
+  selectPolyline,
+  deletePolyline,
 } from "../redux/slices/polylineSlice";
 import { selectGridSize, selectSnapToGrid } from "../redux/slices/gridSlice";
 import useDeleteKey from "../hooks/useDeleteKey";
@@ -39,7 +40,7 @@ const Canvas = () => {
   const gridSize = useSelector(selectGridSize);
   const snapToGrid = useSelector(selectSnapToGrid);
   const fitToViewRequest = useSelector(selectFitToViewRequest);
-  const polylineState = useSelector((state) => state.polyline);
+  const polylineMode = useSelector(selectPolylineMode);
 
   const {
     svgRef,
@@ -54,16 +55,12 @@ const Canvas = () => {
     handleMouseUp,
     toggleItemSelection,
     handleItemMouseDown,
-    handleKeyDown,
   } = useCanvas();
 
   const {
     handleCanvasClick,
     handlePolylineFinalize,
-    handlePolylineSelect,
-    handlePolylineMouseDown,
     handleCanvasMouseMove,
-    polylineMode,
     currentPolyline,
     shadowPoint,
   } = usePolyline(svgRef, gRef);
@@ -94,23 +91,25 @@ const Canvas = () => {
     };
   }, [handleWheel]);
 
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedPolylineId) {
+          dispatch(deletePolyline(selectedPolylineId));
+        } else if (selectedItemId) {
+          handleDeleteKey(e);
+        }
+      }
+    },
+    [dispatch, selectedPolylineId, selectedItemId, handleDeleteKey]
+  );
+
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleKeyDown]);
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleDeleteKey);
-    return () => {
-      window.removeEventListener("keydown", handleDeleteKey);
-    };
-  }, [handleDeleteKey]);
-
-  useEffect(() => {
-    dispatch(updateHistoryAction(polylineState));
-  }, [dispatch, polylineState]);
 
   const addItemRequest = useSelector((state) => state.layout.addItemRequest);
   useEffect(() => {
@@ -155,6 +154,7 @@ const Canvas = () => {
         handleCanvasClick(e);
       } else {
         toggleItemSelection(null);
+        dispatch(selectPolyline(null));
       }
       handleCanvasMouseMove(e);
     },
@@ -163,6 +163,7 @@ const Canvas = () => {
       handleCanvasMouseMove,
       polylineMode,
       toggleItemSelection,
+      dispatch,
     ]
   );
 
@@ -232,11 +233,10 @@ const Canvas = () => {
               key={polyline.id}
               polyline={polyline}
               isSelected={polyline.id === selectedPolylineId}
-              onSelect={handlePolylineSelect}
-              handlePolylineMouseDown={handlePolylineMouseDown}
               transform={transform}
             />
           ))}
+          // ... (previous code remains the same)
           {currentPolyline.length > 0 && (
             <Polyline
               polyline={{
@@ -249,7 +249,6 @@ const Canvas = () => {
               }}
               isActive={true}
               transform={transform}
-              handlePolylineMouseDown={() => {}}
             />
           )}
           {shadowPoint && currentPolyline.length > 0 && (

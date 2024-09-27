@@ -1,10 +1,10 @@
 import React from "react";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline, Box } from "@mui/material";
-import theme from "../theme"; // Adjust the path if necessary
-import Header from "../components/Header";
-import Toolbar from "../components/Toolbar";
-import Canvas from "../components/Canvas";
+import theme from "../theme";
+import Header from "./Header";
+import Toolbar from "./Toolbar";
+import Canvas from "./Canvas";
 
 const App = () => {
   return (

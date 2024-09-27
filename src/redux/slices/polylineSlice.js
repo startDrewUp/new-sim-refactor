@@ -81,7 +81,6 @@ const polylineSlice = createSlice({
     },
     selectPolyline: (state, action) => {
       state.selectedPolylineId = action.payload;
-      updateHistory(state);
     },
     clearPolylines: (state) => {
       polylineAdapter.removeAll(state);
@@ -98,6 +97,17 @@ const polylineSlice = createSlice({
       state.currentStrokeDasharray =
         strokeDasharray ?? state.currentStrokeDasharray;
       state.currentIsClosed = isClosed ?? state.currentIsClosed;
+      updateHistory(state);
+    },
+    updatePolylinePosition: (state, action) => {
+      const { id, dx, dy } = action.payload;
+      const polyline = state.entities[id];
+      if (polyline) {
+        polyline.points = polyline.points.map((point) => ({
+          x: point.x + dx,
+          y: point.y + dy,
+        }));
+      }
       updateHistory(state);
     },
     undo: (state) => {
@@ -140,6 +150,7 @@ export const {
   selectPolyline,
   clearPolylines,
   setPolylineStyle,
+  updatePolylinePosition,
   undo,
   redo,
 } = polylineSlice.actions;
