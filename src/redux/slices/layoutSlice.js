@@ -14,35 +14,49 @@ const initialState = itemsAdapter.getInitialState({
   historyIndex: -1,
 });
 
+const updateHistory = (state) => {
+  const currentItems = itemsAdapter.getSelectors().selectAll(state);
+  state.history = state.history.slice(0, state.historyIndex + 1);
+  state.history.push({
+    items: currentItems,
+    selectedItemId: state.selectedItemId,
+  });
+  state.historyIndex++;
+  if (state.history.length > 20) {
+    state.history.shift();
+    state.historyIndex--;
+  }
+};
+
 const layoutSlice = createSlice({
   name: "layout",
   initialState,
   reducers: {
     addItem: (state, action) => {
       itemsAdapter.addOne(state, action.payload);
-      layoutSlice.caseReducers.saveHistory(state);
+      updateHistory(state);
     },
     updateItem: (state, action) => {
       itemsAdapter.updateOne(state, action.payload);
-      layoutSlice.caseReducers.saveHistory(state);
+      updateHistory(state);
     },
     deleteItem: (state, action) => {
       itemsAdapter.removeOne(state, action.payload);
-      layoutSlice.caseReducers.saveHistory(state);
+      updateHistory(state);
     },
     clearItems: (state) => {
       itemsAdapter.removeAll(state);
-      layoutSlice.caseReducers.saveHistory(state);
+      updateHistory(state);
     },
     updateItemPosition: (state, action) => {
       const { id, x, y } = action.payload;
       itemsAdapter.updateOne(state, { id, changes: { x, y } });
-      layoutSlice.caseReducers.saveHistory(state);
+      updateHistory(state);
     },
     deleteSelectedItems: (state, action) => {
       itemsAdapter.removeMany(state, action.payload);
       state.selectedItemId = null;
-      layoutSlice.caseReducers.saveHistory(state);
+      updateHistory(state);
     },
     requestAddItem: (state, action) => {
       state.addItemRequest = action.payload;
@@ -58,22 +72,11 @@ const layoutSlice = createSlice({
     },
     selectItem: (state, action) => {
       state.selectedItemId = action.payload;
+      updateHistory(state);
     },
     deselectItems: (state) => {
       state.selectedItemId = null;
-    },
-    saveHistory: (state) => {
-      state.history = state.history.slice(0, state.historyIndex + 1);
-      const currentState = {
-        items: itemsAdapter.getSelectors().selectAll(state),
-        selectedItemId: state.selectedItemId,
-      };
-      state.history.push(currentState);
-      state.historyIndex++;
-      if (state.history.length > 20) {
-        state.history.shift();
-        state.historyIndex--;
-      }
+      updateHistory(state);
     },
     undo: (state) => {
       if (state.historyIndex > 0) {
@@ -95,6 +98,7 @@ const layoutSlice = createSlice({
       const { items, ...rest } = action.payload;
       itemsAdapter.setAll(state, items);
       Object.assign(state, rest);
+      updateHistory(state);
     },
   },
 });
