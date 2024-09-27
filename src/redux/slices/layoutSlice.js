@@ -14,13 +14,17 @@ const initialState = itemsAdapter.getInitialState({
   historyIndex: -1,
 });
 
-const updateHistory = (state) => {
-  const currentItems = itemsAdapter.getSelectors().selectAll(state);
+const updateHistory = (state, polylineState) => {
   state.history = state.history.slice(0, state.historyIndex + 1);
-  state.history.push({
-    items: currentItems,
+  const currentState = {
+    items: itemsAdapter.getSelectors().selectAll(state),
     selectedItemId: state.selectedItemId,
-  });
+    polylines: polylineState.entities,
+    currentPolyline: polylineState.currentPolyline,
+    selectedPolylineId: polylineState.selectedPolylineId,
+    polylineMode: polylineState.polylineMode,
+  };
+  state.history.push(currentState);
   state.historyIndex++;
   if (state.history.length > 20) {
     state.history.shift();
@@ -34,29 +38,23 @@ const layoutSlice = createSlice({
   reducers: {
     addItem: (state, action) => {
       itemsAdapter.addOne(state, action.payload);
-      updateHistory(state);
     },
     updateItem: (state, action) => {
       itemsAdapter.updateOne(state, action.payload);
-      updateHistory(state);
     },
     deleteItem: (state, action) => {
       itemsAdapter.removeOne(state, action.payload);
-      updateHistory(state);
     },
     clearItems: (state) => {
       itemsAdapter.removeAll(state);
-      updateHistory(state);
     },
     updateItemPosition: (state, action) => {
       const { id, x, y } = action.payload;
       itemsAdapter.updateOne(state, { id, changes: { x, y } });
-      updateHistory(state);
     },
     deleteSelectedItems: (state, action) => {
       itemsAdapter.removeMany(state, action.payload);
       state.selectedItemId = null;
-      updateHistory(state);
     },
     requestAddItem: (state, action) => {
       state.addItemRequest = action.payload;
@@ -72,11 +70,12 @@ const layoutSlice = createSlice({
     },
     selectItem: (state, action) => {
       state.selectedItemId = action.payload;
-      updateHistory(state);
     },
     deselectItems: (state) => {
       state.selectedItemId = null;
-      updateHistory(state);
+    },
+    updateHistoryAction: (state, action) => {
+      updateHistory(state, action.payload);
     },
     undo: (state) => {
       if (state.historyIndex > 0) {
@@ -84,6 +83,12 @@ const layoutSlice = createSlice({
         const prevState = state.history[state.historyIndex];
         itemsAdapter.setAll(state, prevState.items);
         state.selectedItemId = prevState.selectedItemId;
+        return {
+          polylines: prevState.polylines,
+          currentPolyline: prevState.currentPolyline,
+          selectedPolylineId: prevState.selectedPolylineId,
+          polylineMode: prevState.polylineMode,
+        };
       }
     },
     redo: (state) => {
@@ -92,13 +97,18 @@ const layoutSlice = createSlice({
         const nextState = state.history[state.historyIndex];
         itemsAdapter.setAll(state, nextState.items);
         state.selectedItemId = nextState.selectedItemId;
+        return {
+          polylines: nextState.polylines,
+          currentPolyline: nextState.currentPolyline,
+          selectedPolylineId: nextState.selectedPolylineId,
+          polylineMode: nextState.polylineMode,
+        };
       }
     },
     loadCanvasState: (state, action) => {
       const { items, ...rest } = action.payload;
       itemsAdapter.setAll(state, items);
       Object.assign(state, rest);
-      updateHistory(state);
     },
   },
 });
@@ -116,6 +126,7 @@ export const {
   clearFitToViewRequest,
   selectItem,
   deselectItems,
+  updateHistoryAction,
   undo,
   redo,
   loadCanvasState,

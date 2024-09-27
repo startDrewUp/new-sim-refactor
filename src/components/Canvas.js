@@ -1,11 +1,11 @@
 import React, { useEffect, useCallback, useRef } from "react";
 import { Box } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
 import useCanvas from "../hooks/useCanvas";
 import CanvasItem from "./CanvasItem";
 import ItemEditDialog from "./ItemEditDialog";
 import Polyline from "./Polyline";
 import { v4 as uuidv4 } from "uuid";
-import { useDispatch, useSelector } from "react-redux";
 import {
   addItem,
   clearAddItemRequest,
@@ -13,6 +13,7 @@ import {
   selectItems,
   selectSelectedItemId,
   selectFitToViewRequest,
+  updateHistoryAction,
 } from "../redux/slices/layoutSlice";
 import { selectTransform } from "../redux/slices/transformSlice";
 import {
@@ -20,25 +21,25 @@ import {
   selectPolylines,
   selectCurrentPolyline,
   selectSelectedPolylineId,
-  selectPolyline,
+  finalizePolyline,
 } from "../redux/slices/polylineSlice";
 import { selectGridSize, selectSnapToGrid } from "../redux/slices/gridSlice";
 import useDeleteKey from "../hooks/useDeleteKey";
 import useItemEditing from "../hooks/useItemEditing";
 import useFitToView from "../hooks/useFitToView";
+import usePolyline from "../hooks/usePolyline";
 
 const Canvas = () => {
   const dispatch = useDispatch();
   const transform = useSelector(selectTransform);
   const layoutItems = useSelector(selectItems);
   const layoutPolylines = useSelector(selectPolylines);
-  const currentPolyline = useSelector(selectCurrentPolyline);
-  const polylineMode = useSelector(selectPolylineMode);
   const selectedItemId = useSelector(selectSelectedItemId);
   const selectedPolylineId = useSelector(selectSelectedPolylineId);
   const gridSize = useSelector(selectGridSize);
   const snapToGrid = useSelector(selectSnapToGrid);
   const fitToViewRequest = useSelector(selectFitToViewRequest);
+  const polylineState = useSelector((state) => state.polyline);
 
   const {
     svgRef,
@@ -47,17 +48,25 @@ const Canvas = () => {
     viewBox,
     isDragging,
     gridLines,
-    shadowPoint,
     handleWheel,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
     toggleItemSelection,
-    handleCanvasClick,
     handleItemMouseDown,
-    handlePolylineMouseDown,
     handleKeyDown,
   } = useCanvas();
+
+  const {
+    handleCanvasClick,
+    handlePolylineFinalize,
+    handlePolylineSelect,
+    handlePolylineMouseDown,
+    handleCanvasMouseMove,
+    polylineMode,
+    currentPolyline,
+    shadowPoint,
+  } = usePolyline(svgRef, gRef);
 
   const {
     editingItem,
@@ -85,13 +94,6 @@ const Canvas = () => {
     };
   }, [handleWheel]);
 
-  const handleSelect = useCallback(
-    (id) => {
-      dispatch(selectPolyline(id));
-    },
-    [dispatch]
-  );
-
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -105,6 +107,10 @@ const Canvas = () => {
       window.removeEventListener("keydown", handleDeleteKey);
     };
   }, [handleDeleteKey]);
+
+  useEffect(() => {
+    dispatch(updateHistoryAction(polylineState));
+  }, [dispatch, polylineState]);
 
   const addItemRequest = useSelector((state) => state.layout.addItemRequest);
   useEffect(() => {
@@ -143,6 +149,39 @@ const Canvas = () => {
     }
   }, [fitToViewRequest, fitToView, dispatch]);
 
+  const handleCanvasClickWrapper = useCallback(
+    (e) => {
+      if (polylineMode) {
+        handleCanvasClick(e);
+      } else {
+        toggleItemSelection(null);
+      }
+      handleCanvasMouseMove(e);
+    },
+    [
+      handleCanvasClick,
+      handleCanvasMouseMove,
+      polylineMode,
+      toggleItemSelection,
+    ]
+  );
+
+  const handleKeyPress = useCallback(
+    (e) => {
+      if (e.key === "Enter" && polylineMode) {
+        dispatch(finalizePolyline());
+      }
+    },
+    [dispatch, polylineMode]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keypress", handleKeyPress);
+    return () => {
+      window.removeEventListener("keypress", handleKeyPress);
+    };
+  }, [handleKeyPress]);
+
   return (
     <Box
       ref={containerRef}
@@ -167,7 +206,7 @@ const Canvas = () => {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onClick={handleCanvasClick}
+        onClick={handleCanvasClickWrapper}
       >
         <g
           ref={gRef}
@@ -193,26 +232,35 @@ const Canvas = () => {
               key={polyline.id}
               polyline={polyline}
               isSelected={polyline.id === selectedPolylineId}
-              onSelect={handleSelect}
+              onSelect={handlePolylineSelect}
               handlePolylineMouseDown={handlePolylineMouseDown}
               transform={transform}
             />
           ))}
           {currentPolyline.length > 0 && (
             <Polyline
-              polyline={{ id: "current", points: currentPolyline }}
+              polyline={{
+                id: "current",
+                points: currentPolyline,
+                strokeColor: "red",
+                strokeWidth: 2,
+                strokeDasharray: "5,5",
+                isClosed: false,
+              }}
               isActive={true}
               transform={transform}
+              handlePolylineMouseDown={() => {}}
             />
           )}
-          {shadowPoint && (
-            <Polyline
-              polyline={{
-                id: "shadow",
-                points: [...currentPolyline, shadowPoint],
-              }}
-              isShadow={true}
-              transform={transform}
+          {shadowPoint && currentPolyline.length > 0 && (
+            <line
+              x1={currentPolyline[currentPolyline.length - 1].x}
+              y1={currentPolyline[currentPolyline.length - 1].y}
+              x2={shadowPoint.x}
+              y2={shadowPoint.y}
+              stroke="red"
+              strokeWidth={2 / transform.scale}
+              strokeDasharray="5,5"
             />
           )}
         </g>

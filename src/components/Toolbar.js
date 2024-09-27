@@ -10,12 +10,8 @@ import {
   DialogContent,
   DialogActions,
   Grid,
-  Tooltip,
   List,
   ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { SketchPicker } from "react-color";
@@ -31,7 +27,12 @@ import {
   selectShowGrid,
   selectSnapToGrid,
 } from "../redux/slices/gridSlice";
-import { setPolylineMode, addPolyline } from "../redux/slices/polylineSlice";
+import {
+  setPolylineMode,
+  selectPolylineMode,
+  setPolylineStyle,
+  finalizePolyline,
+} from "../redux/slices/polylineSlice";
 import { clearCanvas } from "../redux/thunks/canvasThunks";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
@@ -54,7 +55,7 @@ const Toolbar = () => {
   const dispatch = useDispatch();
   const showGrid = useSelector(selectShowGrid);
   const snapToGrid = useSelector(selectSnapToGrid);
-  const polylineMode = useSelector((state) => state.layout.polylineMode);
+  const polylineMode = useSelector(selectPolylineMode);
   const [openDialog, setOpenDialog] = useState(false);
   const [itemName, setItemName] = useState("");
   const [itemColor, setItemColor] = useState("#4CAF50");
@@ -81,8 +82,11 @@ const Toolbar = () => {
     setItemHeight(5);
   };
 
-  const handleAddPolyline = () => {
-    dispatch(setPolylineMode(true));
+  const handleTogglePolylineMode = () => {
+    if (polylineMode) {
+      dispatch(finalizePolyline());
+    }
+    dispatch(setPolylineMode(!polylineMode));
   };
 
   return (
@@ -107,12 +111,12 @@ const Toolbar = () => {
         <ListItem>
           <ToolbarButton
             startIcon={<PolylineIcon />}
-            onClick={handleAddPolyline}
+            onClick={handleTogglePolylineMode}
+            color={polylineMode ? "primary" : "default"}
           >
-            Add Polyline
+            {polylineMode ? "Finish Polyline" : "Add Polyline"}
           </ToolbarButton>
         </ListItem>
-        <Divider />
         <ListItem>
           <ToolbarButton
             startIcon={<DeleteSweepIcon />}
@@ -129,7 +133,6 @@ const Toolbar = () => {
             Fit to View
           </ToolbarButton>
         </ListItem>
-        <Divider />
         <ListItem>
           <ToolbarButton
             startIcon={<UndoIcon />}
@@ -146,7 +149,6 @@ const Toolbar = () => {
             Redo
           </ToolbarButton>
         </ListItem>
-        <Divider />
         <ListItem>
           <ToolbarButton
             startIcon={showGrid ? <GridOnIcon /> : <GridOffIcon />}

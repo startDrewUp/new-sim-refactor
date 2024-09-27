@@ -12,10 +12,10 @@ const initialState = polylineAdapter.getInitialState({
   selectedPolylineId: null,
   history: [],
   historyIndex: -1,
-  currentStrokeColor: null,
-  currentStrokeWidth: null,
-  currentStrokeDasharray: null,
-  currentIsClosed: null,
+  currentStrokeColor: "#0000FF",
+  currentStrokeWidth: 2,
+  currentStrokeDasharray: "none",
+  currentIsClosed: false,
 });
 
 const updateHistory = (state) => {
@@ -23,8 +23,13 @@ const updateHistory = (state) => {
   state.history = state.history.slice(0, state.historyIndex + 1);
   state.history.push({
     polylines: currentPolylines,
-    currentPolyline: state.currentPolyline,
+    currentPolyline: [...state.currentPolyline],
     selectedPolylineId: state.selectedPolylineId,
+    polylineMode: state.polylineMode,
+    currentStrokeColor: state.currentStrokeColor,
+    currentStrokeWidth: state.currentStrokeWidth,
+    currentStrokeDasharray: state.currentStrokeDasharray,
+    currentIsClosed: state.currentIsClosed,
   });
   state.historyIndex++;
   if (state.history.length > 20) {
@@ -41,10 +46,6 @@ const polylineSlice = createSlice({
       state.polylineMode = action.payload;
       if (!action.payload) {
         state.currentPolyline = [];
-        state.currentStrokeColor = null;
-        state.currentStrokeWidth = null;
-        state.currentStrokeDasharray = null;
-        state.currentIsClosed = null;
       }
       updateHistory(state);
     },
@@ -57,43 +58,29 @@ const polylineSlice = createSlice({
         const newPolyline = {
           id: Date.now().toString(),
           points: [...state.currentPolyline],
-          strokeColor: state.currentStrokeColor || "#0000FF",
-          strokeWidth: state.currentStrokeWidth || 2,
-          strokeDasharray: state.currentStrokeDasharray || "none",
-          isClosed: state.currentIsClosed || false,
+          strokeColor: state.currentStrokeColor,
+          strokeWidth: state.currentStrokeWidth,
+          strokeDasharray: state.currentStrokeDasharray,
+          isClosed: state.currentIsClosed,
         };
         polylineAdapter.addOne(state, newPolyline);
+        state.currentPolyline = [];
       }
-      state.currentPolyline = [];
-      state.currentStrokeColor = null;
-      state.currentStrokeWidth = null;
-      state.currentStrokeDasharray = null;
-      state.currentIsClosed = null;
       updateHistory(state);
     },
-    updatePolylinePoint: (state, action) => {
-      const { polylineId, index, newPoint } = action.payload;
-      const polyline = state.entities[polylineId];
-      if (polyline && polyline.points[index]) {
-        polyline.points[index] = newPoint;
-        updateHistory(state);
-      }
+    updatePolyline: (state, action) => {
+      polylineAdapter.updateOne(state, action.payload);
+      updateHistory(state);
     },
-    removePointFromPolyline: (state, action) => {
-      const { polylineId, index } = action.payload;
-      const polyline = state.entities[polylineId];
-      if (polyline && polyline.points[index]) {
-        polyline.points.splice(index, 1);
-        updateHistory(state);
+    deletePolyline: (state, action) => {
+      polylineAdapter.removeOne(state, action.payload);
+      if (state.selectedPolylineId === action.payload) {
+        state.selectedPolylineId = null;
       }
+      updateHistory(state);
     },
     selectPolyline: (state, action) => {
       state.selectedPolylineId = action.payload;
-      updateHistory(state);
-    },
-    deleteSelectedPolylines: (state, action) => {
-      polylineAdapter.removeMany(state, action.payload);
-      state.selectedPolylineId = null;
       updateHistory(state);
     },
     clearPolylines: (state) => {
@@ -106,10 +93,11 @@ const polylineSlice = createSlice({
     setPolylineStyle: (state, action) => {
       const { strokeColor, strokeWidth, strokeDasharray, isClosed } =
         action.payload;
-      state.currentStrokeColor = strokeColor;
-      state.currentStrokeWidth = strokeWidth;
-      state.currentStrokeDasharray = strokeDasharray;
-      state.currentIsClosed = isClosed;
+      state.currentStrokeColor = strokeColor ?? state.currentStrokeColor;
+      state.currentStrokeWidth = strokeWidth ?? state.currentStrokeWidth;
+      state.currentStrokeDasharray =
+        strokeDasharray ?? state.currentStrokeDasharray;
+      state.currentIsClosed = isClosed ?? state.currentIsClosed;
       updateHistory(state);
     },
     undo: (state) => {
@@ -119,6 +107,11 @@ const polylineSlice = createSlice({
         polylineAdapter.setAll(state, prevState.polylines);
         state.currentPolyline = prevState.currentPolyline;
         state.selectedPolylineId = prevState.selectedPolylineId;
+        state.polylineMode = prevState.polylineMode;
+        state.currentStrokeColor = prevState.currentStrokeColor;
+        state.currentStrokeWidth = prevState.currentStrokeWidth;
+        state.currentStrokeDasharray = prevState.currentStrokeDasharray;
+        state.currentIsClosed = prevState.currentIsClosed;
       }
     },
     redo: (state) => {
@@ -128,6 +121,11 @@ const polylineSlice = createSlice({
         polylineAdapter.setAll(state, nextState.polylines);
         state.currentPolyline = nextState.currentPolyline;
         state.selectedPolylineId = nextState.selectedPolylineId;
+        state.polylineMode = nextState.polylineMode;
+        state.currentStrokeColor = nextState.currentStrokeColor;
+        state.currentStrokeWidth = nextState.currentStrokeWidth;
+        state.currentStrokeDasharray = nextState.currentStrokeDasharray;
+        state.currentIsClosed = nextState.currentIsClosed;
       }
     },
   },
@@ -137,10 +135,9 @@ export const {
   setPolylineMode,
   addPolylinePoint,
   finalizePolyline,
-  updatePolylinePoint,
-  removePointFromPolyline,
+  updatePolyline,
+  deletePolyline,
   selectPolyline,
-  deleteSelectedPolylines,
   clearPolylines,
   setPolylineStyle,
   undo,
@@ -163,6 +160,12 @@ export const selectPolylineMode = (state) => state.polyline.polylineMode;
 export const selectCurrentPolyline = (state) => state.polyline.currentPolyline;
 export const selectSelectedPolylineId = (state) =>
   state.polyline.selectedPolylineId;
+export const selectCurrentPolylineStyle = (state) => ({
+  strokeColor: state.polyline.currentStrokeColor,
+  strokeWidth: state.polyline.currentStrokeWidth,
+  strokeDasharray: state.polyline.currentStrokeDasharray,
+  isClosed: state.polyline.currentIsClosed,
+});
 
 export const selectSelectedPolyline = createSelector(
   [selectPolylines, selectSelectedPolylineId],
