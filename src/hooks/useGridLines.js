@@ -1,11 +1,10 @@
-// src/hooks/useGridLines.js
-
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import {
   selectShowGrid,
   selectGridSize,
   selectGridOpacity,
+  selectGridColor,
 } from "../redux/slices/gridSlice";
 import { selectTransform } from "../redux/slices/transformSlice";
 
@@ -13,6 +12,7 @@ const useGridLines = (viewBox) => {
   const showGrid = useSelector(selectShowGrid);
   const gridSize = useSelector(selectGridSize);
   const gridOpacity = useSelector(selectGridOpacity);
+  const gridColor = useSelector(selectGridColor);
   const transform = useSelector(selectTransform);
 
   const gridLines = useMemo(() => {
@@ -46,8 +46,9 @@ const useGridLines = (viewBox) => {
           y1={startY}
           x2={gridX}
           y2={endY}
-          stroke={`rgba(0, 128, 0, ${gridOpacity})`}
+          stroke={gridColor}
           strokeWidth={1 / transform.scale}
+          opacity={gridOpacity}
         />
       );
     }
@@ -59,13 +60,14 @@ const useGridLines = (viewBox) => {
           y1={gridY}
           x2={endX}
           y2={gridY}
-          stroke={`rgba(0, 128, 0, ${gridOpacity})`}
+          stroke={gridColor}
           strokeWidth={1 / transform.scale}
+          opacity={gridOpacity}
         />
       );
     }
     return lines;
-  }, [viewBox, transform, gridSize, gridOpacity, showGrid]);
+  }, [viewBox, transform, gridSize, gridColor, gridOpacity, showGrid]);
 
   return gridLines;
 };

@@ -4,11 +4,11 @@ const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#6200ee", // Purple 500
+      main: "#007AFF", // Apple's vibrant blue
       contrastText: "#ffffff",
     },
     secondary: {
-      main: "#03dac6", // Teal 200
+      main: "#F2F2F7", // Light gray for subtle accents
       contrastText: "#000000",
     },
     background: {
@@ -21,7 +21,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', Arial, sans-serif",
     h6: {
       fontWeight: 500,
     },
@@ -30,26 +30,30 @@ const theme = createTheme({
       fontWeight: 500,
     },
   },
+  shape: {
+    borderRadius: 8,
+  },
   components: {
     MuiAppBar: {
       styleOverrides: {
-        colorDefault: {
+        root: {
           backgroundColor: "#ffffff",
           color: "rgba(0, 0, 0, 0.87)",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)",
         },
       },
     },
     MuiToolbar: {
       styleOverrides: {
         root: {
-          minHeight: "64px",
+          minHeight: "56px",
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: "4px",
+          borderRadius: "8px",
         },
       },
     },
@@ -57,6 +61,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: "#ffffff",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)",
         },
       },
     },

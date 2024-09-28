@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
   AppBar,
-  Toolbar as MuiToolbar,
+  Toolbar,
   Typography,
   Button,
   Box,
@@ -20,11 +20,33 @@ import {
   loadCanvasStateThunk,
 } from "../redux/thunks/canvasThunks";
 
+const HeaderContainer = styled(AppBar)(({ theme }) => ({
+  position: "static",
+  backgroundColor: "#1E1E1E", // Dark space gray
+  color: theme.palette.common.white,
+  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)",
+  zIndex: theme.zIndex.drawer + 1,
+}));
+
+const HeaderToolbar = styled(Toolbar)({
+  minHeight: '48px',
+  paddingLeft: '8px',
+  paddingRight: '8px',
+});
+
 const HeaderButton = styled(Button)(({ theme }) => ({
-  color: theme.palette.text.primary,
+  color: theme.palette.common.white,
+  textTransform: 'none',
+  padding: theme.spacing(0.5, 1),
+  fontSize: '0.8rem',
   "&:hover": {
-    backgroundColor: theme.palette.action.hover,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
+}));
+
+const HeaderIconButton = styled(IconButton)(({ theme }) => ({
+  color: theme.palette.common.white,
+  padding: theme.spacing(0.5),
 }));
 
 const Header = () => {
@@ -64,18 +86,18 @@ const Header = () => {
 
   return (
     <>
-      <AppBar position="static" color="default" elevation={1}>
-        <MuiToolbar>
-          <IconButton edge="start" color="inherit" aria-label="menu">
+      <HeaderContainer>
+        <HeaderToolbar>
+          <HeaderIconButton edge="start" aria-label="menu">
             <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, ml: 2 }}>
+          </HeaderIconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1, ml: 1, fontSize: '1rem' }}>
             Facility Layout
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <IconButton color="inherit">
+            <HeaderIconButton aria-label="search">
               <SearchIcon />
-            </IconButton>
+            </HeaderIconButton>
             <HeaderButton startIcon={<SaveIcon />} onClick={handleSaveCanvas}>
               Save
             </HeaderButton>
@@ -91,12 +113,12 @@ const Header = () => {
                 Load
               </HeaderButton>
             </label>
-            <IconButton color="inherit">
+            <HeaderIconButton aria-label="more">
               <MoreVertIcon />
-            </IconButton>
+            </HeaderIconButton>
           </Box>
-        </MuiToolbar>
-      </AppBar>
+        </HeaderToolbar>
+      </HeaderContainer>
       <Snackbar
         open={openSnackbar}
         autoHideDuration={3000}
