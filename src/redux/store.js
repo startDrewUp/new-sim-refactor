@@ -1,13 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import layoutReducer from "./slices/layoutSlice";
 import transformReducer from "./slices/transformSlice";
-import polylineReducer from "./slices/polylineSlice";
 import gridReducer from "./slices/gridSlice";
 
 const rootReducer = {
   layout: layoutReducer,
   transform: transformReducer,
-  polyline: polylineReducer,
   grid: gridReducer,
 };
 

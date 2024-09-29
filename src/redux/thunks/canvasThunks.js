@@ -1,20 +1,15 @@
-// src/redux/thunks/canvasThunks.js
-
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   clearItems,
-  requestAddItem,
-  requestFitToView,
+  addItem,
   loadCanvasState,
   selectItems,
 } from "../slices/layoutSlice";
-import { clearPolylines } from "../slices/polylineSlice";
 import { resetGridSettings } from "../slices/gridSlice";
 import { resetTransform } from "../slices/transformSlice";
 
 export const clearCanvas = () => (dispatch) => {
   dispatch(clearItems());
-  dispatch(clearPolylines());
   dispatch(resetGridSettings());
   dispatch(resetTransform());
 };
@@ -22,14 +17,7 @@ export const clearCanvas = () => (dispatch) => {
 export const handleAddItemThunk = createAsyncThunk(
   "layout/handleAddItem",
   async (newItem, { dispatch }) => {
-    dispatch(requestAddItem(newItem));
-  }
-);
-
-export const fitToViewThunk = createAsyncThunk(
-  "layout/fitToView",
-  async (_, { dispatch }) => {
-    dispatch(requestFitToView());
+    dispatch(addItem(newItem));
   }
 );
 
@@ -41,7 +29,6 @@ export const saveCanvasState = () => (dispatch, getState) => {
       ...state.layout,
       items,
     },
-    polyline: state.polyline,
     grid: state.grid,
     transform: state.transform,
   };

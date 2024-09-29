@@ -1,5 +1,3 @@
-// src/hooks/useZoom.js
-
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransform, selectTransform } from "../redux/slices/transformSlice";

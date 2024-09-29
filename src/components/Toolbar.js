@@ -16,8 +16,7 @@ import {
 import { styled } from "@mui/system";
 import { SketchPicker } from "react-color";
 import {
-  requestAddItem,
-  requestFitToView,
+  addItem,
   undo,
   redo,
 } from "../redux/slices/layoutSlice";
@@ -29,18 +28,11 @@ import {
   selectSnapToGrid,
   selectGridColor,
 } from "../redux/slices/gridSlice";
-import {
-  setPolylineMode,
-  selectPolylineMode,
-  finalizePolyline,
-} from "../redux/slices/polylineSlice";
 import { clearCanvas } from "../redux/thunks/canvasThunks";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
-import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import UndoIcon from "@mui/icons-material/Undo";
 import RedoIcon from "@mui/icons-material/Redo";
-import TimelineIcon from "@mui/icons-material/Timeline";
 import GridOnIcon from "@mui/icons-material/GridOn";
 import GridOffIcon from "@mui/icons-material/GridOff";
 import ColorLensIcon from "@mui/icons-material/ColorLens";
@@ -48,7 +40,7 @@ import ColorLensIcon from "@mui/icons-material/ColorLens";
 const ToolbarContainer = styled(Paper)(({ theme }) => ({
   width: 240,
   height: "100%",
-  backgroundColor: "#1E1E1E", // Dark space gray
+  backgroundColor: "#1E1E1E",
   color: theme.palette.common.white,
   borderRight: 'none',
   borderTopRightRadius: 0,
@@ -110,7 +102,6 @@ const Toolbar = () => {
   const showGrid = useSelector(selectShowGrid);
   const snapToGrid = useSelector(selectSnapToGrid);
   const gridColor = useSelector(selectGridColor);
-  const polylineMode = useSelector(selectPolylineMode);
   const [openDialog, setOpenDialog] = useState(false);
   const [openColorPicker, setOpenColorPicker] = useState(false);
   const [itemName, setItemName] = useState("");
@@ -129,19 +120,13 @@ const Toolbar = () => {
       y: 0,
     };
 
-    dispatch(requestAddItem(newItem));
+    console.log("Adding new item:", newItem); // Debugging log
+    dispatch(addItem(newItem));
     setOpenDialog(false);
     setItemName("");
     setItemColor("#4CAF50");
     setItemWidth(5);
     setItemHeight(5);
-  };
-
-  const handleTogglePolylineMode = () => {
-    if (polylineMode) {
-      dispatch(finalizePolyline());
-    }
-    dispatch(setPolylineMode(!polylineMode));
   };
 
   const handleGridColorChange = (color) => {
@@ -155,13 +140,6 @@ const Toolbar = () => {
         <ToolbarButton startIcon={<AddBoxIcon />} onClick={() => setOpenDialog(true)}>
           Add Item
         </ToolbarButton>
-        <ToolbarButton
-          startIcon={<TimelineIcon />}
-          onClick={handleTogglePolylineMode}
-          color={polylineMode ? "primary" : "inherit"}
-        >
-          {polylineMode ? "Finish Polyline" : "Add Polyline"}
-        </ToolbarButton>
       </ToolbarSection>
 
       <StyledDivider />
@@ -170,9 +148,6 @@ const Toolbar = () => {
         <SectionTitle>Canvas Actions</SectionTitle>
         <ToolbarButton startIcon={<DeleteSweepIcon />} onClick={() => dispatch(clearCanvas())}>
           Clear Canvas
-        </ToolbarButton>
-        <ToolbarButton startIcon={<ZoomOutMapIcon />} onClick={() => dispatch(requestFitToView())}>
-          Fit to View
         </ToolbarButton>
       </ToolbarSection>
 

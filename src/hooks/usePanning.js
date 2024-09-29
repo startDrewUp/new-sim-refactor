@@ -1,5 +1,3 @@
-// src/hooks/usePanning.js
-
 import { useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransform, selectTransform } from "../redux/slices/transformSlice";

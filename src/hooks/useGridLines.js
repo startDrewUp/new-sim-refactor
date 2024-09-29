@@ -16,56 +16,60 @@ const useGridLines = (viewBox) => {
   const transform = useSelector(selectTransform);
 
   const gridLines = useMemo(() => {
-    if (!showGrid) return null;
+    if (!showGrid || !viewBox) return null;
 
     const gridSizePx = gridSize * 10; // 10 pixels per foot
-    const s = transform.scale;
-    const x = transform.x;
-    const y = transform.y;
-    const width = viewBox.width;
-    const height = viewBox.height;
+    const { scale, x: translateX, y: translateY } = transform;
 
     // Calculate the visible area in world coordinates
-    const x_min = x - (0.5 * width) / s;
-    const x_max = x + (1.5 * width) / s;
-    const y_min = y - (0.5 * height) / s;
-    const y_max = y + (1.5 * height) / s;
+    const visibleLeft = translateX - viewBox.width / (2 * scale);
+    const visibleRight = translateX + viewBox.width / (2 * scale);
+    const visibleTop = translateY - viewBox.height / (2 * scale);
+    const visibleBottom = translateY + viewBox.height / (2 * scale);
 
-    const startX = Math.floor(x_min / gridSizePx) * gridSizePx;
-    const endX = Math.ceil(x_max / gridSizePx) * gridSizePx;
-    const startY = Math.floor(y_min / gridSizePx) * gridSizePx;
-    const endY = Math.ceil(y_max / gridSizePx) * gridSizePx;
+    // Add extra padding to ensure grid covers the entire screen
+    const padding = Math.max(viewBox.width, viewBox.height) / scale;
+    
+    // Calculate grid line positions
+    const startX = Math.floor((visibleLeft - padding) / gridSizePx) * gridSizePx;
+    const endX = Math.ceil((visibleRight + padding) / gridSizePx) * gridSizePx;
+    const startY = Math.floor((visibleTop - padding) / gridSizePx) * gridSizePx;
+    const endY = Math.ceil((visibleBottom + padding) / gridSizePx) * gridSizePx;
 
     const lines = [];
 
-    for (let gridX = startX; gridX <= endX; gridX += gridSizePx) {
+    // Vertical lines
+    for (let x = startX; x <= endX; x += gridSizePx) {
       lines.push(
         <line
-          key={`v${gridX}`}
-          x1={gridX}
+          key={`v${x}`}
+          x1={x}
           y1={startY}
-          x2={gridX}
+          x2={x}
           y2={endY}
           stroke={gridColor}
-          strokeWidth={1 / transform.scale}
+          strokeWidth={1 / scale}
           opacity={gridOpacity}
         />
       );
     }
-    for (let gridY = startY; gridY <= endY; gridY += gridSizePx) {
+
+    // Horizontal lines
+    for (let y = startY; y <= endY; y += gridSizePx) {
       lines.push(
         <line
-          key={`h${gridY}`}
+          key={`h${y}`}
           x1={startX}
-          y1={gridY}
+          y1={y}
           x2={endX}
-          y2={gridY}
+          y2={y}
           stroke={gridColor}
-          strokeWidth={1 / transform.scale}
+          strokeWidth={1 / scale}
           opacity={gridOpacity}
         />
       );
     }
+
     return lines;
   }, [viewBox, transform, gridSize, gridColor, gridOpacity, showGrid]);
 

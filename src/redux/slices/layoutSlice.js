@@ -7,8 +7,6 @@ import {
 const itemsAdapter = createEntityAdapter();
 
 const initialState = itemsAdapter.getInitialState({
-  addItemRequest: null,
-  fitToViewRequest: false,
   selectedItemId: null,
   history: [],
   historyIndex: -1,
@@ -34,6 +32,7 @@ const layoutSlice = createSlice({
   reducers: {
     addItem: (state, action) => {
       itemsAdapter.addOne(state, action.payload);
+      console.log("Item added to store:", action.payload); // Debugging log
       updateHistory(state);
     },
     updateItem: (state, action) => {
@@ -57,18 +56,6 @@ const layoutSlice = createSlice({
       itemsAdapter.removeMany(state, action.payload);
       state.selectedItemId = null;
       updateHistory(state);
-    },
-    requestAddItem: (state, action) => {
-      state.addItemRequest = action.payload;
-    },
-    clearAddItemRequest: (state) => {
-      state.addItemRequest = null;
-    },
-    requestFitToView: (state) => {
-      state.fitToViewRequest = true;
-    },
-    clearFitToViewRequest: (state) => {
-      state.fitToViewRequest = false;
     },
     selectItem: (state, action) => {
       state.selectedItemId = action.payload;
@@ -107,10 +94,6 @@ export const {
   clearItems,
   updateItemPosition,
   deleteSelectedItems,
-  requestAddItem,
-  clearAddItemRequest,
-  requestFitToView,
-  clearFitToViewRequest,
   selectItem,
   deselectItems,
   undo,
@@ -129,8 +112,6 @@ export const selectItemIds = itemsSelectors.selectIds;
 export const selectTotalItems = itemsSelectors.selectTotal;
 
 export const selectSelectedItemId = (state) => state.layout.selectedItemId;
-export const selectAddItemRequest = (state) => state.layout.addItemRequest;
-export const selectFitToViewRequest = (state) => state.layout.fitToViewRequest;
 
 export const selectSelectedItem = createSelector(
   [selectItems, selectSelectedItemId],

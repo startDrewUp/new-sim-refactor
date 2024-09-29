@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-const CanvasItem = ({
+const CanvasItem = React.memo(({
   item,
   isSelected,
   onSelect,
@@ -13,31 +13,15 @@ const CanvasItem = ({
   const { id, x, y, width, height, name, color } = item;
   const pixelsPerUnit = 10 * gridSize;
 
-  const handleSingleClick = (e) => {
-    e.stopPropagation();
-    onSelect(id);
-  };
-
-  const handleContextMenu = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onEdit(item);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === "F2") {
-      e.preventDefault();
-      onEdit(item);
-    }
-  };
-
   return (
     <g
       className="canvas-item"
       onMouseDown={(e) => handleItemMouseDown(e, item)}
-      onClick={handleSingleClick}
-      onContextMenu={handleContextMenu}
-      onKeyDown={handleKeyDown}
+      onClick={() => onSelect(id)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onEdit(item);
+      }}
       tabIndex={0}
       role="button"
       aria-label={`Item ${id}`}
@@ -67,7 +51,7 @@ const CanvasItem = ({
       )}
     </g>
   );
-};
+});
 
 CanvasItem.propTypes = {
   item: PropTypes.shape({
@@ -85,10 +69,8 @@ CanvasItem.propTypes = {
   handleItemMouseDown: PropTypes.func.isRequired,
   transform: PropTypes.shape({
     scale: PropTypes.number.isRequired,
-    x: PropTypes.number.isRequired,
-    y: PropTypes.number.isRequired,
   }).isRequired,
   gridSize: PropTypes.number.isRequired,
 };
 
-export default React.memo(CanvasItem);
+export default CanvasItem;
