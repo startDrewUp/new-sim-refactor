@@ -2,10 +2,10 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   showGrid: true,
-  snapToGrid: true,
+  snapToGrid: false,
   gridSize: 5,
   gridOpacity: 0.5,
-  gridColor: "rgba(0, 128, 0, 0.5)", // Default green color with 50% opacity
+  gridColor: "rgba(0.5,0.5,0.5,1)", // Default gray color with 50% opacity
 };
 
 const gridSlice = createSlice({
